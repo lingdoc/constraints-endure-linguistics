@@ -1,4 +1,4 @@
-GPGLMMimport os
+import os
 import gzip
 import re
 import warnings
@@ -11,11 +11,10 @@ import gpboost as gpb
 warnings.simplefilter(action='ignore', category=UserWarning)
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-def parse_nexus_tree_topology(trees_gz_path, num_trees=50):
+def parse_nexus_tree_topology(trees_gz_path, num_trees=100):
     """
-    Reads the zipped Nexus tree file once, maps numerical indices to Glottocodes,
-    and returns a list of dictionaries mapping language tips to their parent node branch IDs.
-    Gets a sample of `num_trees` (default 50).
+    Reads the zipped Nexus tree file, normalizes for 100 vs 1000 tree variations,
+    corrects the string extraction array splits, and returns exactly num_trees samples.
     """
     if not os.path.exists(trees_gz_path):
         return []
@@ -37,6 +36,7 @@ def parse_nexus_tree_topology(trees_gz_path, num_trees=50):
                 continue
 
             if in_translate_block and line_clean:
+                # split whitespace to separate the index token from the name label
                 parts = re.split(r'\s+', line_clean.rstrip(',').rstrip(';'))
                 if len(parts) >= 2:
                     idx_token = parts[0].strip()
@@ -75,15 +75,15 @@ def parse_nexus_tree_topology(trees_gz_path, num_trees=50):
                     token = match.group(1)
                     if token in translate_map and stack:
                         branch_mapping[translate_map[token]] = stack[-1]
-
-        sampled_trees_branches.append((tree_idx, branch_mapping)) # store both tree configuration matrix and its original position index
+        # store both tree configuration matrix and its original position index
+        sampled_trees_branches.append((tree_idx + 1, branch_mapping))
 
     return sampled_trees_branches
 
-def process_single_feature_gpglmm(featfile, gldf_shared, ntrees, output_dir="model_predictions"):
+def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir="model_predictions"):
     """
-    Fits a Bernoulli Logit model over ntrees incorporating a continuous spatial GP matrix.
-    Captures individual step estimations natively across the phylogenetic landscape.
+    Fits a Bernoulli Logit GP-GLMM over 100 phylogenetic trees. Accumulates random effects
+    per individual step in memory to generate a single combined output file.
     """
     clean_path = featfile.replace("\\", "/")
     path_parts = clean_path.split("/")
@@ -92,7 +92,6 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees, output_dir="mod
     feature_dir = os.path.dirname(featfile)
     trees_gz_path = os.path.join(feature_dir, "pruned_tree.trees.gz")
     output_dir = os.path.join("output", output_dir)
-
     os.makedirs(output_dir, exist_ok=True)
 
     stats_profile = {
@@ -108,7 +107,6 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees, output_dir="mod
             return univ, stats_profile
         # get the universal feature info (DV/IV are binary)
         fdf = pd.read_csv(featfile, delimiter="\t", header=None, names=["glottocode", "DV", "IV"])
-
         if len(fdf) < 10:
             stats_profile["Reason"] = f"Insufficient data rows (N={len(fdf)} < 10)"
             return univ, stats_profile
@@ -124,7 +122,6 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees, output_dir="mod
         df = df.dropna(subset=['IV', 'DV', 'latitude', 'longitude', 'macroarea', 'Family_ID'])
         df['DV'] = pd.to_numeric(df['DV'], errors='coerce') # ensure the values in this column are binary
         df['IV'] = pd.to_numeric(df['IV'], errors='coerce') # ensure the values in this column are binary
-
         # get some statistical info for this universal
         stats_profile["Total_Languages_Found"] = len(df)
         if len(df) > 0:
@@ -132,7 +129,7 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees, output_dir="mod
             stats_profile["Distinct_Families"] = int(df['Family_ID'].nunique())
             stats_profile["DV_Variance"] = float(df['DV'].var())
             stats_profile["DV_Mean"] = float(df['DV'].mean())
-        # error handling
+
         if len(df) < 10:
             stats_profile["Reason"] = "Data count dropped below 10 rows after data clean"
             return univ, stats_profile
@@ -162,7 +159,14 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees, output_dir="mod
         params, ses = [], []
         trajectory_records = [] # array tracking raw parameters across iterations
         had_hessian_issue = False
-        # iterate through each sampled phylogeny to estimate model parameters
+
+        # Dictionary to aggregate random effect draws across individual steps
+        latent_distribution_accumulator = {
+            "Glottocode": df['glottocode'].values,
+            "Family_ID": df['Family_ID'].values
+        }
+
+        # execute parametric calculations over the 100 tree matrices
         for iter_id, branch_map in tree_branches_list:
             # map glottocodes to specific branches; fill missing with 0 (root/unassigned)
             sub_branch_series = df['glottocode'].map(branch_map).fillna(0).astype(int)
@@ -181,7 +185,6 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees, output_dir="mod
                     likelihood="bernoulli_logit", # binary DV (presence/absence) via logit link
                     num_parallel_threads=16 # optimized for 32-core cpu with 2 workers
                 )
-
                 # configure L-BFGS optimizer
                 gp_model.set_optim_params(params={
                     "optimizer_cov": "lbfgs", # maximize marginal likelihood via L-BFGS
@@ -201,16 +204,12 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees, output_dir="mod
                     p_val = float(coef_dict["Covariate_2"].get("Param.", np.nan))
                     s_val = float(coef_dict["Covariate_2"].get("Std. err.", np.nan))
 
-                    # live print verification
-                    print(f"   [Tree Step Log] Feature: {univ} | Extracted Slope: {p_val:.4f} | Raw SE: {s_val}")
-
                     if np.isnan(s_val) or np.isinf(s_val) or s_val <= 0:
-                        s_val = 1.0  # boundary protection fallback
+                        s_val = 1.0 # boundary protection fallback
                         had_hessian_issue = True
 
                     params.append(p_val)
                     ses.append(s_val)
-
                     # data logging
                     trajectory_records.append({
                         "Feature": univ,
@@ -219,52 +218,43 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees, output_dir="mod
                         "Standard_Error": s_val
                     })
 
+                    # Extract random effects for this specific tree step
+                    preds = gp_model.predict(
+                        X_pred=X_with_intercept,
+                        group_data_pred=group_data,
+                        gp_coords_pred=coords,
+                        predict_response=False,
+                        predict_var=False
+                    )
+
+                    # Accumulate results in memory to preserve the distribution variance shape
+                    latent_distribution_accumulator[f"Tree_{iter_id:03d}_Mean"] = preds['mu']
+
             except Exception as e:
                 print(f"   Execution crash on tree step: {str(e)}")
                 continue
 
-        # get random effects for each observation
-        try:
-            preds = gp_model.predict(
-                X_pred=X_with_intercept,
-                group_data_pred=group_data,
-                gp_coords_pred=coords,
-                predict_response=False,
-                predict_var=True
-            )
-            # store in a df
-            df_latent = pd.DataFrame({
-                "Glottocode": df['glottocode'].values,
-                "Family_ID": df['Family_ID'].values,
-                "GPGLMM_Latent_Mean": preds['mu'],
-                "GPGLMM_Latent_Variance": preds['var']
-            })
-            # save the predictions for downstream analysis
-            latent_out_path = os.path.join(output_dir, f"gpglmm_latent_all_languages_{univ.lower()}.csv")
-            df_latent.to_csv(latent_out_path, index=False)
-            print(f"   All language random effects successfully secured at: '{latent_out_path}'")
-
-        except Exception as pred_err:
-            print(f"   Warning: Could not dump latent random effects for {univ}: {str(pred_err)}")
-
-        # handle errors
         if not params:
             stats_profile["Status"] = "Failed"
             stats_profile["Reason"] = "Model did not converge on any tree configuration"
             return univ, stats_profile
 
+        # save the single consolidated matrix
+        df_latent_dist = pd.DataFrame(latent_distribution_accumulator)
+        latent_out_path = os.path.join(output_dir, f"gpglmm_latent_distribution_{univ.lower()}.csv")
+        df_latent_dist.to_csv(latent_out_path, index=False)
+
         # save tracking estimates
         if trajectory_records:
             df_traj = pd.DataFrame(trajectory_records)
-            traj_out_path = os.path.join(output_dir, f"gpglmm_{ntrees}tree_trajectory_{univ.lower()}.csv")
+            traj_out_path = os.path.join(output_dir, f"gpglmm_100tree_trajectory_{univ.lower()}.csv")
             df_traj.to_csv(traj_out_path, index=False)
-            print(f"   Trajectory logging complete! Saved to '{traj_out_path}'")
 
-        # calculate final values for the universal
+        # compute final statistical averages across the full MCMC tree matrix distribution
         final_param = float(np.median(params))
         final_se = float(np.median(ses))
 
-        # guard against zero-division exceptions during final reporting splits
+        # guard against zero-division exceptions during final metric evaluation
         if final_se == 0:
             final_se = 1.0
         # calculate z and p values
@@ -279,12 +269,9 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees, output_dir="mod
         stats_profile["GPGLMM_Std. err."] = final_se
         stats_profile["GPGLMM_z value"] = z_values
         stats_profile["GPGLMM_P>|z|"] = p_values
-        # determine significance
-        if p_values < 0.05:
-            stats_profile["GPGLMM_sig"] = "YES"
-        else:
-            stats_profile["GPGLMM_sig"] = "NO"
+        stats_profile["GPGLMM_sig"] = "YES" if p_values < 0.05 else "NO"
 
+        print(f" [COMPLETED] Feature: {univ} | Final Median Slope: {final_param:.4f} | Sig: {stats_profile['GPGLMM_sig']}")
         return univ, stats_profile
 
     except Exception as e:
