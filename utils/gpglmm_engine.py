@@ -82,8 +82,7 @@ def parse_nexus_tree_topology(trees_gz_path, num_trees=100):
 
 def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir="model_predictions"):
     """
-    Fits a Bernoulli Logit GP-GLMM over 100 phylogenetic trees. Accumulates random effects
-    per individual step in memory to generate a single combined output file.
+    Fits a Bernoulli Logit GP-GLMM over 100 phylogenetic trees.
     """
     clean_path = featfile.replace("\\", "/")
     path_parts = clean_path.split("/")
@@ -159,20 +158,20 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
         params, ses = [], []
         trajectory_records = [] # array tracking raw parameters across iterations
         had_hessian_issue = False
-
-        # Dictionary to aggregate random effect draws across individual steps
+        # dictionary to aggregate random effect draws across individual steps
         latent_distribution_accumulator = {
             "Glottocode": df['glottocode'].values,
             "Family_ID": df['Family_ID'].values
         }
 
-        # execute parametric calculations over the 100 tree matrices
+        # loop through trees
         for iter_id, branch_map in tree_branches_list:
             # map glottocodes to specific branches; fill missing with 0 (root/unassigned)
             sub_branch_series = df['glottocode'].map(branch_map).fillna(0).astype(int)
             branch_factor = sub_branch_series.astype('category').cat.codes.to_numpy()
-            # construct the multi-level grouping matrix (family, macroarea, branch)
-            group_data = np.column_stack((family_factor, macro_factor, branch_factor)).astype(float)
+
+            # reassemble the complete multi-level grouping matrix
+            loop_matrix_state = np.column_stack((family_factor, macro_factor, branch_factor)).astype(float)
 
             try:
                 # implement a Bernoulli Logit GP-GLMM to capture:
@@ -183,7 +182,7 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
                     gp_coords=coords, # lat/long coordinates for spatial GP component
                     cov_function="exponential", # spatial correlation decays exponentially with distance
                     likelihood="bernoulli_logit", # binary DV (presence/absence) via logit link
-                    num_parallel_threads=16 # optimized for 32-core cpu with 2 workers
+                    num_parallel_threads=8 # optimized for 32-core cpu with 4 workers
                 )
                 # configure L-BFGS optimizer
                 gp_model.set_optim_params(params={
@@ -194,18 +193,19 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
                     "convergence_criterion": "relative_change_in_parameters",
                     "delta_rel_conv": 1e-3 # convergence threshold
                 })
-                # fit the model
+
+                # fit parameters over the newly established tree topology slice
                 gp_model.fit(y=y, X=X_with_intercept)
-                # get the results for this model
+
                 coefficients = gp_model.get_coef(std_err=True, format_pandas=True)
                 coef_dict = coefficients.to_dict()
-                # store the results for this model
+
                 if "Covariate_2" in coef_dict:
                     p_val = float(coef_dict["Covariate_2"].get("Param.", np.nan))
                     s_val = float(coef_dict["Covariate_2"].get("Std. err.", np.nan))
 
                     if np.isnan(s_val) or np.isinf(s_val) or s_val <= 0:
-                        s_val = 1.0 # boundary protection fallback
+                        s_val = 1.0
                         had_hessian_issue = True
 
                     params.append(p_val)
@@ -217,17 +217,15 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
                         "Beta_Slope": p_val,
                         "Standard_Error": s_val
                     })
-
-                    # Extract random effects for this specific tree step
+                    # extract random effects for this specific tree step
                     preds = gp_model.predict(
                         X_pred=X_with_intercept,
-                        group_data_pred=group_data,
+                        group_data_pred=loop_matrix_state,
                         gp_coords_pred=coords,
                         predict_response=False,
                         predict_var=False
                     )
-
-                    # Accumulate results in memory to preserve the distribution variance shape
+                    # accumulate results in memory regarding the distribution variance shape
                     latent_distribution_accumulator[f"Tree_{iter_id:03d}_Mean"] = preds['mu']
 
             except Exception as e:
