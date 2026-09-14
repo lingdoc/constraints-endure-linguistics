@@ -1,26 +1,66 @@
-# Constraints that endure: How Galton's Problem exposes model bias in linguistic typology
+# Constraints That Endure: How Galton's Problem Exposes Model Bias in Linguistic Typology
 
-This repository supports a reanalysis of the findings in [Verkerk et al (2025)](https://www.nature.com/articles/s41562-025-02325-z) with a focus on optimizing the underlying methodology for identifying significant statistical universals. Specifically, I implement a Generalized Linear Mixed Model (GLMM) with a continuous Gaussian Process (GP). I utilize the Python `gpboost` library primarily for its ability to handle Gaussian Process matrices (for spatial autocorrelation) alongside mixed effects (language family, branch, macroarea) - the Tree Boosting functionality in GPBoost is not used.
+This repository provides code and matrices for a parametric reanalysis of the cross-linguistic universals framework described in [Verkerk et al (2025)](https://www.nature.com/articles/s41562-025-02325-z).
 
-This specific architecture (GP-GLMM) allows for a more nuanced handling of language isolates than is possible with the covariance matrix used by R's `brms` library, as well as how phylogenetic evolution co-evolution is subsequently handled in `BayesTraits`. This constructive reanalysis confirms the main claims of the paper but also highlights the likely presence of a greater number of significant results than was reported.
+The pipeline replaces unanchored multi-level tree priors with a spatial Gaussian Process Generalized Linear Mixed Model (GP-GLMM) via Laplace approximation mode estimation, resolving boundary artifacts across genealogical isolates to recover hidden structural constraints.
 
-The repository is forked from the original GitHub repo containing the data underlying the Verkerk et al 2025 paper (https://github.com/SimonGreenhill/TestingLinguisticUniversals). Datasets include (for each universal) a single coded language file and a 1000- or 100-tree sample of phylogenies. The relevant data is stored in the `tlu` folder.
+---
 
-To check the files and relevant statistics, run the script at `utils/check_datasets.py`.
+## Repository overview
 
-The model is instantiated with the code in `utils/gpglmm_engine.py`.
+```text
+├── output/
+│   ├── feature_synthesis/                  # Feature-by-feature spatiophylogenetic tables
+│   ├── global_isolate_comparisons/         # Macro-level visualization of languages
+│   ├── isolate_comparisons/                # Isolate diagnostic comparison plots
+│   ├── model_predictions_2d/               # Population latent effects (2D projection)
+│   ├── model_predictions_3d/               # Population latent effects (3D Cartesian Parquet)
+│   │
+│   ├── global_synthesis_scatter.png        # Global framework diagnostic scatter plot
+│   ├── GPGLMM_results_191_100tree-2d.xlsx  # Core 2D metric flat projection summaries
+│   ├── GPGLMM_results_191_100tree-3d.xlsx  # Core 3D metric chord summaries
+│   ├── Results_3D_Master_Synthesis.xlsx    # Master 5-group resolution taxonomy matrix
+│   ├── Supplementary_Table_S1_Global..xlsx # Data appendix
+│   ├── Table_A_Consensus.xlsx              # Shared cross-model traits
+│   ├── Table_B_Expansion.xlsx              # Rescued universals (GP-GLMM only)
+│   ├── universals_forest_plot.pdf          # Forest plot
+│   └── universals_forest_plot.png          # Forest graphic
+│
+├── tlu/                                    # Baseline dataset tables
+├── utils/
+│   ├── check_datasets.py                   # Pre-flight data integrity validation
+│   ├── diagnostic_master.py                # Grouping and sub-table synthesizer
+│   ├── gpglmm_engine.py                    # Core spatial field optimization engine
+│   └── plotting_master.py                  # Graphics & forest plot generator
+│
+├── .gitignore
+├── README.md
+└── run_gpglmm.py                           # Pipeline orchestrator
+```
 
-To run the Python 20-tree model on all 191 universals, use the following script: `run_pipeline_20tree_check.py` - this produces `output/GPGLMM_01_20tree.xlsx`.
+---
 
-To run the 100-tree model on the 114 universals found to be significant by the 20-tree model, use the following script: `run_targeted_100tree_parallel.py` - this script is optimized for parallel processing on a 32-core cpu and produces `output/GPGLMM_02_100tree.xlsx`.
+## Workflow
 
-Statistical traces from the model during the 100-tree run are saved in `output/model_predictions/`. This directory contains two files for each feature/universal:
+The repository is built as a linear pipeline. Running the master script from the project root builds models using data from the `tlu` directory, which contains files from the original study (https://github.com/SimonGreenhill/TestingLinguisticUniversals):
 
-1. `gpglmm_latent_all_languages_[feature].csv`: Regularized random effect snapshots, with stabilized latent means and predictive standard errors generated via the cross-classified Laplace optimization routine.
-2. `gpglmm_100tree_trajectory_[feature].csv`: Longitudinal logs tracking fixed-effect slope and standard errors across each step of the tree posterior distribution.
+```bash
+python run_gpglmm.py
+```
 
-The final unified spreadsheet (`output/Results_combined_BT_GPGLMM.xlsx`) combines the Verkerk et al results with the present analysis. To produce this file, run the script at `utils/compile_master_data_sheet.py`.
+To check the outputs or generate plots, run the scripts in the `utils` directory.
 
-To create a plot of the significant universals and their beta coefficients, run the script at `utils/plot_universals_forest.py` - it will create a pdf in the `output` directory based on the final unified spreadsheet.
+### Notes on scripts:
+1. **Validation (`utils/check_datasets.py`):** Audits the structural integrity of baseline typological files in the `tlu/` directory.
+2. **Model Process (`utils/gpglmm_engine.py`):** Instantiates the parametric spatial kernels across coordinate metrics. *(Note: Full population spatial predictions are stored in binary Snappy Parquet blocks inside `output/model_predictions_3d/` to optimize repository storage). Synthesized results combined with the `brms` outputs from the original study are found at `output/feature_synthesis/`*
+3. **Summarization (`utils/diagnostic_master.py`):** Computes the 5-group taxonomy, prints the cross-model alignment assertions to the terminal, and exports sub-tables (`Table_A_Consensus.xlsx`, `Table_B_Expansion.xlsx`).
+4. **Plots (`utils/plotting_master.py`):** Evaluates compiled parameter variances to output the global isolate continuum charts and the primary domain-segregated forest plot graphics.
 
-[![Forest plot](./output/universals_forest_plot.png)](./output/universals_forest_plot.pdf)
+---
+
+## Key Findings Preview
+
+### Proportional Grid Distribution of Validated Universals
+The forest plot displays estimated fixed-effect slope parameters ($\beta$ coefficients) and 95% confidence intervals for the 113 spatial discoveries, stratified by typological domain and color-coded by cross-framework resolution class:
+
+![Forest Plot](./output/universals_forest_plot.png)
