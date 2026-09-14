@@ -15,6 +15,6 @@ venv/
 ehthumbs.db
 Thumbs.db
 
-# Script artifacts
-chunk_push.py
-download_clean.py
+# Block massive diagnostic graphic dumps (Reviewers only need the final summary charts)
+output/global_isolate_comparisons/
+output/isolate_comparisons/
