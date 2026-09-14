@@ -145,8 +145,23 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
         if not tree_branches_list:
             stats_profile["Reason"] = "Tree file processing error"
             return univ, stats_profile
-        # convert spatial and target variables to numpy arrays for GPBoost compatibility
-        coords = df[['latitude', 'longitude']].to_numpy().astype(float)
+        # map 2D Lat/Long into a 3D Earth-Centered coordinate field space (X, Y, Z)
+        # R targets Earth's mean radius in kilometers (6371.0)
+        # scaling inputs to radians matches standard trigonometric vector mappings
+        R = 6371.0
+        lat_rad = np.radians(df['latitude'].to_numpy().astype(float))
+        lon_rad = np.radians(df['longitude'].to_numpy().astype(float))
+
+        x_coords = R * np.cos(lat_rad) * np.cos(lon_rad)
+        y_coords = R * np.cos(lat_rad) * np.sin(lon_rad)
+        z_coords = R * np.sin(lat_rad)
+        # assemble the 3-column array for spatial tracking
+        coords = np.column_stack((x_coords, y_coords, z_coords))
+        ## to run the models using a 2d grid instead, uncomment the following code
+        ## this requires that you also change the "init_cov_pars" further below
+        # coords = df[['latitude', 'longitude']].to_numpy().astype(float)
+
+        # convert target variables to numpy arrays for GPBoost compatibility
         y = df['DV'].to_numpy().astype(float)
         X = df['IV'].to_numpy().astype(float)
         # add intercept term to the design matrix (X)
@@ -178,8 +193,8 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
                 # 1. structured dependencies (via group_data)
                 # 2. continuous spatial autocorrelation (via GP kernel)
                 gp_model = gpb.GPModel(
-                    group_data=group_data, # random effect intercepts (family, macroarea, branch)
-                    gp_coords=coords, # lat/long coordinates for spatial GP component
+                    group_data=loop_matrix_state, # random effect intercepts (family, macroarea, branch)
+                    gp_coords=coords, # lat/long transformed to 3d coordinates for spatial GP component
                     cov_function="exponential", # spatial correlation decays exponentially with distance
                     likelihood="bernoulli_logit", # binary DV (presence/absence) via logit link
                     num_parallel_threads=8 # optimized for 32-core cpu with 4 workers
@@ -189,7 +204,11 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
                     "optimizer_cov": "lbfgs", # maximize marginal likelihood via L-BFGS
                     "maxit": 35, # maximum iterations allowed for convergence
                     # Order: [var_family, var_macroarea, var_branch, var_spatial, range_spatial]
-                    "init_cov_pars": [0.2, 0.2, 0.2, 0.5, 1.5],
+                    # because coordinates are now represented in scale kilometers,
+                    # we increase the range parameter search floor threshold buffer setting
+                    "init_cov_pars": [0.2, 0.2, 0.2, 0.5, 500.0],
+                    ## if using 2d spatial matrix, replace "init_cov_pars" with the code below:
+                    # "init_cov_pars": [0.2, 0.2, 0.2, 0.5, 1.5],
                     "convergence_criterion": "relative_change_in_parameters",
                     "delta_rel_conv": 1e-3 # convergence threshold
                 })
@@ -239,14 +258,14 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
 
         # save the single consolidated matrix
         df_latent_dist = pd.DataFrame(latent_distribution_accumulator)
-        latent_out_path = os.path.join(output_dir, f"gpglmm_latent_distribution_{univ.lower()}.csv")
-        df_latent_dist.to_csv(latent_out_path, index=False)
+        latent_out_path = os.path.join(output_dir, f"gpglmm_latent_distribution_{univ.lower()}.parquet")
+        df_latent_dist.to_parquet(latent_out_path, index=False)
 
         # save tracking estimates
         if trajectory_records:
             df_traj = pd.DataFrame(trajectory_records)
-            traj_out_path = os.path.join(output_dir, f"gpglmm_100tree_trajectory_{univ.lower()}.csv")
-            df_traj.to_csv(traj_out_path, index=False)
+            traj_out_path = os.path.join(output_dir, f"gpglmm_100tree_trajectory_{univ.lower()}.parquet")
+            df_traj.to_parquet(traj_out_path, index=False)
 
         # compute final statistical averages across the full MCMC tree matrix distribution
         final_param = float(np.median(params))

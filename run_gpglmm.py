@@ -28,16 +28,16 @@ def archive_old_run(target_dir="output/model_predictions", completed_features=No
         completed_features = set()
 
     if os.path.exists(target_dir):
-        old_csvs = [f for f in os.listdir(target_dir) if f.endswith('.csv')]
-        if old_csvs:
+        old_files = [f for f in os.listdir(target_dir) if f.endswith('.parquet')]
+        if old_files:
             backup_dir = "output/model_predictions_backup"
 
             # Identify files to clear out vs files to keep based on resume state
             files_to_archive = []
-            for f in old_csvs:
-                # Extracts feature name from: gpglmm_latent_distribution_[feature].csv
-                # or gpglmm_100tree_trajectory_[feature].csv
-                feat_token = f.replace("gpglmm_latent_distribution_", "").replace("gpglmm_100tree_trajectory_", "").replace(".csv", "").upper()
+            for f in old_files:
+                # Extracts feature name from: gpglmm_latent_distribution_[feature].parquet
+                # or gpglmm_100tree_trajectory_[feature].parquet
+                feat_token = f.replace("gpglmm_latent_distribution_", "").replace("gpglmm_100tree_trajectory_", "").replace(".parquet", "").upper()
                 if feat_token not in completed_features:
                     files_to_archive.append(f)
 
@@ -48,7 +48,7 @@ def archive_old_run(target_dir="output/model_predictions", completed_features=No
                     src = os.path.join(target_dir, f)
                     dst = os.path.join(backup_dir, f)
                     shutil.move(src, dst)
-                print("✔ Baseline folder cleared of non-checkpointed artifacts.")
+                print(" Baseline folder cleared of non-checkpointed artifacts.")
     else:
         os.makedirs(target_dir, exist_ok=True)
 
@@ -75,7 +75,7 @@ def save_checkpoint(xdict, output_excel):
     os.replace(temp_excel, output_excel)
 
 if __name__ == "__main__":
-    output_excel = "output/GPGLMM_PRODUCTION_191_100tree.xlsx"
+    output_excel = "output/GPGLMM_results_191_100tree-3d.xlsx"
     predictions_folder = "output/model_predictions"
     os.makedirs("output", exist_ok=True)
 
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     MAX_WORKERS = 4  # Balanced worker allocation for 32 threads total (4 x 8 threads)
 
     print("\n" + "="*75)
-    print(" Launching 191-feature analysis pipeline")
+    print(" Launching 191-feature analysis pipeline with 3D coordinates")
     print("="*75)
     print(f" Initial Repository Pool : {len(all_raw_files)} Total Universals")
     print(f" Already Completed Runs  : {len(completed_features)} Universals [SKIPPED]")
@@ -170,7 +170,7 @@ if __name__ == "__main__":
                 save_checkpoint(xdict, output_excel)
 
             except Exception as crash_err:
-                print(f"\n💥 Worker process crashed on an active thread: {str(crash_err)}")
+                print(f"\n Worker process crashed on an active thread: {str(crash_err)}")
                 continue
 
     print(f"\n Complete 191-Feature analysis finalized! Core metrics log saved to: {output_excel}")
