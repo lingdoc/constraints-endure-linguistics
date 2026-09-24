@@ -6,7 +6,7 @@ import pandas as pd
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-# 8ptimize matrix calculation threads for 32 cores, 4 workers
+# optimize matrix calculation threads for 32 cores, 4 workers
 os.environ["OMP_NUM_THREADS"] = "8"
 os.environ["MKL_NUM_THREADS"] = "8"
 os.environ["OPENBLAS_NUM_THREADS"] = "8"
