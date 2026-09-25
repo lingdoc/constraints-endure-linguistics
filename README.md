@@ -58,6 +58,8 @@ By separating out language isolates as independent variance tracks, this framewo
 
 ## Results of the replication
 
+The replication **confirms the robustness** of the 60 universals supported by the original study's final `BayesTraits` model. At the same time, it identifies 53 additional universals that remain significant when controlling for spatiophylogenetic relations and accurately routing language isolate variance, some of which were shared by their (stage 1) `brms` model.
+
 ### Cross-framework comparison
 This scatter plot maps out where the GP-GLMM agrees or disagrees with the previous method across all 191 linguistic features. Features are spaced out horizontally by how much the current model reduced background uncertainty, and grouped into distinct vertical rows so the different categories don't overlap and blur together:
 
