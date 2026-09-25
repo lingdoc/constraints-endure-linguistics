@@ -7,15 +7,18 @@ import pandas as pd
 import numpy as np
 import glob
 
+# dynamic path routing anchors paths relative to this script's actual file location
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 def generate_3d_comparison_master():
     print("Compiling cross-framework master data comparisons...")
 
-    # Relative paths targeting sister folders from inside the utils directory
-    verkerk_file = "../tlu/BT_results_summary.txt"
-    run_2d_summary = "../output/GPGLMM_results_191_100tree-2d.xlsx"
-    run_3d_summary = "../output/GPGLMM_results_191_100tree-3d.xlsx"
-    synthesis_dir = "../output/feature_synthesis/"
-    output_master = "../output/Results_3D_Master_Synthesis.xlsx"
+    # dynamic paths scale perfectly from anywhere in the workspace
+    verkerk_file = os.path.join(base_dir, "tlu", "BT_results_summary.txt")
+    run_2d_summary = os.path.join(base_dir, "output", "GPGLMM_results_191_100tree-2d.xlsx")
+    run_3d_summary = os.path.join(base_dir, "output", "GPGLMM_results_191_100tree-3d.xlsx")
+    synthesis_dir = os.path.join(base_dir, "output", "feature_synthesis")
+    output_master = os.path.join(base_dir, "output", "Results_3D_Master_Synthesis.xlsx")
 
     missing = [f for f in [verkerk_file, run_2d_summary, run_3d_summary] if not os.path.exists(f)]
     if missing:
@@ -136,15 +139,15 @@ def generate_3d_comparison_master():
         'Framework_Resolution_Class'
     ] = "Stable Core Framework Consensus (Passed Co-evolution & GP-GLMM)"
 
-    # 2. Group 2: Confirmed by brms and My Model (Passed Stage 1 & GP-GLMM, but FAILED Co-evolution)
+    # 2. Group 2: Confirmed by brms and GP-GLMM (Passed Stage 1 & GP-GLMM, but FAILED Co-evolution)
     df_master.loc[
         (df_master['GPGLMM_3D_IsSig'] == 'YES') &
         (df_master['Passed_Legacy_BRMS_Stage'] == 1) &
         (df_master['Verkerk_Final_CoEvol'] == 'NO'),
         'Framework_Resolution_Class'
-    ] = "Confirmed by brms and My Model (Rescued Intermediate)"
+    ] = "Confirmed by brms and GP-GLMM (Rescued Intermediate)"
 
-    # 3. Group 3: Confirmed by My Model Alone (GP-GLMM Significant, but FAILED/Skipped in Legacy early stages)
+    # 3. Group 3: Confirmed by GP-GLMM Alone (GP-GLMM Significant, but FAILED/Skipped in Legacy early stages)
     df_master.loc[
         (df_master['GPGLMM_3D_IsSig'] == 'YES') &
         (df_master['Passed_Legacy_BRMS_Stage'] == 0),
@@ -158,7 +161,7 @@ def generate_3d_comparison_master():
         'Framework_Resolution_Class'
     ] = "Coordinate Sensitivity Artifacts"
 
-    # 5. Group 5: Thrown Out by My Model Alone (Passed Legacy Stage 1 but explicitly Rejected by GP-GLMM)
+    # 5. Group 5: Thrown Out by GP-GLMM Alone (Passed Legacy Stage 1 but explicitly Rejected by GP-GLMM)
     df_master.loc[
         (df_master['GPGLMM_3D_IsSig'] == 'NO') &
         (df_master['Passed_Legacy_BRMS_Stage'] == 1),
@@ -184,7 +187,7 @@ def generate_3d_comparison_master():
     print(f" Total Features Evaluated                     : {len(df_master)}")
     print(f" Passed Legacy brms Stage 1 Filter            : {legacy_pass_count} / 191")
     print(f" Group [Stable Core Framework Consensus]      : {len(df_master[df_master['Framework_Resolution_Class']=='Stable Core Framework Consensus (Passed Co-evolution & GP-GLMM)'])}")
-    print(f" Group [Confirmed by brms and My Model]       : {len(df_master[df_master['Framework_Resolution_Class']=='Confirmed by brms and My Model (Rescued Intermediate)'])}")
+    print(f" Group [Confirmed by brms and GP-GLMM]        : {len(df_master[df_master['Framework_Resolution_Class']=='Confirmed by brms and GP-GLMM (Rescued Intermediate)'])}")
     print(f" Group [Rescued Universals (GP-GLMM Only)]    : {len(df_master[df_master['Framework_Resolution_Class']=='Rescued Universal (Signal Recovered by GP-GLMM Only)'])}")
     print(f" Group [Coordinate Sensitivity Artifacts]     : {len(df_master[df_master['Framework_Resolution_Class']=='Coordinate Sensitivity Artifacts'])}")
     print(f" Group [Legacy False Positives]               : {len(df_master[df_master['Framework_Resolution_Class']=='Legacy False Positive (Cleared brms Stage 1 but Rejected by GP-GLMM)'])}")
@@ -195,9 +198,9 @@ def generate_3d_comparison_master():
 def generate_supplementary_master_table():
     print("Building structured supplemental table indices...")
 
-    synthesis_dir = "../output/feature_synthesis/"
-    master_summary_path = "../output/Results_3D_Master_Synthesis.xlsx"
-    output_xlsx = "../output/Supplementary_Table_S1_Global_Synthesis.xlsx"
+    synthesis_dir = os.path.join(base_dir, "output", "feature_synthesis")
+    master_summary_path = os.path.join(base_dir, "output", "Results_3D_Master_Synthesis.xlsx")
+    output_xlsx = os.path.join(base_dir, "output", "Supplementary_Table_S1_Global_Synthesis.xlsx")
 
     feature_files = glob.glob(os.path.join(synthesis_dir, "universal_*.csv"))
     if not feature_files:

@@ -5,9 +5,12 @@ of raw linguistic data tables and compressed phylogenetic trees.
 import os
 import gzip
 
+# 📍 DYNAMIC PATH ROUTING: anchors folders relative to this script's location
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 def check_linguistic_datasets():
-    # Relative path targeting the sister folder from inside the utils directory
-    results_dir = "../tlu"
+    # dynamically routes to the data folder from anywhere in the workspace
+    results_dir = os.path.join(base_dir, "tlu")
 
     if not os.path.isdir(results_dir):
         print(f"Error: Cannot find directory '{results_dir}'.")

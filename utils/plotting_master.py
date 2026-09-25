@@ -11,14 +11,21 @@ from matplotlib.lines import Line2D
 import matplotlib.gridspec as gridspec
 from scipy import stats
 
-def generate_empirical_stacked_contrast(feature_id="0582KA", master_summary_path="../output/Results_3D_Master_Synthesis.xlsx"):
+# dynamic path routing
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+master_summary_default = os.path.join(base_dir, "output", "Results_3D_Master_Synthesis.xlsx")
+
+def generate_empirical_stacked_contrast(feature_id="0582KA", master_summary_path=None):
     """
     Plots localized parameter uncertainty contrasts for isolated languages to
     evaluate variance reduction profiles.
     """
+    if master_summary_path is None:
+        master_summary_path = master_summary_default
+
     feature_clean = feature_id.strip().lower()
-    synthesis_path = f"../output/feature_synthesis/universal_{feature_clean}.csv"
-    output_img_path = f"../output/isolate_comparisons/isolate_contrast_adaptive_{feature_clean}.png"
+    synthesis_path = os.path.join(base_dir, "output", "feature_synthesis", f"universal_{feature_clean}.csv")
+    output_img_path = os.path.join(base_dir, "output", "isolate_comparisons", f"isolate_contrast_adaptive_{feature_clean}.png")
 
     if os.path.exists(output_img_path):
         return
@@ -96,8 +103,11 @@ def generate_empirical_stacked_contrast(feature_id="0582KA", master_summary_path
     plt.close()
     print(f"Programmatic contrast saved successfully for feature {feature_id.upper()} -> '{output_img_path}'")
 
-def batch_plot_all_completed_features(master_summary_path="../output/Results_3D_Master_Synthesis.xlsx"):
-    synthesis_folder = "../output/feature_synthesis/"
+def batch_plot_all_completed_features(master_summary_path=None):
+    if master_summary_path is None:
+        master_summary_path = master_summary_default
+
+    synthesis_folder = os.path.join(base_dir, "output", "feature_synthesis")
     completed_master_files = glob.glob(os.path.join(synthesis_folder, "universal_*.csv"))
 
     if not completed_master_files:
@@ -113,14 +123,17 @@ def batch_plot_all_completed_features(master_summary_path="../output/Results_3D_
         except Exception as e:
             print(f"Runtime exception skipped on feature {extracted_id}: {str(e)}")
 
-def generate_global_empirical_contrast(feature_id="0582KA", master_summary_path="../output/Results_3D_Master_Synthesis.xlsx"):
+def generate_global_empirical_contrast(feature_id="0582KA", master_summary_path=None):
     """
     Generates a global stacked contrast plot tracking regularized family cluster
     trends alongside geographic isolates.
     """
+    if master_summary_path is None:
+        master_summary_path = master_summary_default
+
     feature_clean = feature_id.strip().lower()
-    synthesis_path = f"../output/feature_synthesis/universal_{feature_clean}.csv"
-    output_img_path = f"../output/global_isolate_comparisons/global_contrast_{feature_clean}.png"
+    synthesis_path = os.path.join(base_dir, "output", "feature_synthesis", f"universal_{feature_clean}.csv")
+    output_img_path = os.path.join(base_dir, "output", "global_isolate_comparisons", f"global_contrast_{feature_clean}.png")
 
     if os.path.exists(output_img_path):
         return
@@ -206,8 +219,11 @@ def generate_global_empirical_contrast(feature_id="0582KA", master_summary_path=
     plt.close()
     print(f"Macro-contrast view exported successfully for feature {feature_id.upper()} -> '{output_img_path}'")
 
-def batch_plot_all_global_views(master_summary_path="../output/Results_3D_Master_Synthesis.xlsx"):
-    synthesis_folder = "../output/feature_synthesis/"
+def batch_plot_all_global_views(master_summary_path=None):
+    if master_summary_path is None:
+        master_summary_path = master_summary_default
+
+    synthesis_folder = os.path.join(base_dir, "output", "feature_synthesis")
     completed_files = glob.glob(os.path.join(synthesis_folder, "universal_*.csv"))
     if not completed_files:
         return
@@ -216,8 +232,13 @@ def batch_plot_all_global_views(master_summary_path="../output/Results_3D_Master
         extracted_id = os.path.basename(file_path).replace("universal_", "").replace(".csv", "").upper()
         generate_global_empirical_contrast(feature_id=extracted_id, master_summary_path=master_summary_path)
 
-def generate_supplementary_tables(master_file="../output/Results_3D_Master_Synthesis.xlsx", output_dir="../output"):
+def generate_supplementary_tables(master_file=None, output_dir=None):
     print("Extracting supplemental sub-tables from master data matrix...")
+
+    if master_file is None:
+        master_file = master_summary_default
+    if output_dir is None:
+        output_dir = os.path.join(base_dir, "output")
 
     df_master = pd.read_excel(master_file)
     df = df_master.reset_index().copy()
@@ -269,8 +290,13 @@ def generate_supplementary_tables(master_file="../output/Results_3D_Master_Synth
 
     return table_a, table_b
 
-def generate_proportional_quadrant_plot(master_file="../output/Results_3D_Master_Synthesis.xlsx", output_dir="../output"):
-    print("Generating manuscript forest plots...")
+def generate_proportional_quadrant_plot(master_file=None, output_dir=None):
+    if master_file is None:
+        master_file = master_summary_default
+    if output_dir is None:
+        output_dir = os.path.join(base_dir, "output")
+
+    print("Generating forest plots...")
 
     if not os.path.exists(master_file):
         print(f"Error: Master synthesis summary missing at: '{master_file}'")
@@ -392,10 +418,13 @@ def generate_proportional_quadrant_plot(master_file="../output/Results_3D_Master
     plt.close()
     print(f"Proportional forest plots successfully generated -> '{pdf_out}' & '{png_out}'\n")
 
-def generate_global_summary_scatter_plot(master_summary_path="../output/Results_3D_Master_Synthesis.xlsx"):
+def generate_global_summary_scatter_plot(master_summary_path=None):
+    if master_summary_path is None:
+        master_summary_path = master_summary_default
+
     print("Generating comprehensive meta-analysis diagnostic scatter plot...")
-    synthesis_dir = "../output/feature_synthesis/"
-    output_img_path = "../output/global_synthesis_scatter.png"
+    synthesis_dir = os.path.join(base_dir, "output", "feature_synthesis")
+    output_img_path = os.path.join(base_dir, "output", "global_synthesis_scatter.png")
 
     df_master = None
     if os.path.exists(master_summary_path):
@@ -426,47 +455,42 @@ def generate_global_summary_scatter_plot(master_summary_path="../output/Results_
         uncertainty_reduction = vk_se - gp_se
 
         group_assignment = "Consensus Non-Significant"
-        color_code = "#bcbd22"  # Muted Yellow
+        color_code = "#bcbd22"
         marker_type = "s"
         delta_z_score = np.random.uniform(-0.5, 0.5)
 
         if df_master is not None and feat_lower in df_master.index:
             row = df_master.loc[feat_lower]
 
-            # Map metrics values for plotting axes
             vk_se = df_iso['Verkerk_BRMS_SE'].mean()
             gp_se = df_iso['GPGLMM_3D_SE'].mean()
             uncertainty_reduction = vk_se - gp_se
 
-            # Read the final evaluated classification class directly
             framework_class = str(row.get("Framework_Resolution_Class", "")).strip()
 
-            # ──────────────────────────────────────────────────────────────────
-            # 📍 RESTORED: SCHEMATIC VERTICAL SPREAD TO MATCH ORIGINAL READABILITY
-            # ──────────────────────────────────────────────────────────────────
             if "Stable Core Framework Consensus" in framework_class:
                 group_assignment = "Stable Core Consensus"
-                color_code = "#2ca02c"  # Green Circles
+                color_code = "#2ca02c"
                 marker_type = "o"
-                delta_z_score = np.random.uniform(0.1, 1.8)  # Cleanly below line
-            elif "Confirmed by brms and My Model" in framework_class:
+                delta_z_score = np.random.uniform(0.1, 1.8)
+            elif "Confirmed by brms and GP-GLMM" in framework_class:
                 group_assignment = "Rescued Universals (brms + GPGLMM)"
-                color_code = "#1f77b4"  # Royal Blue Triangles
+                color_code = "#1f77b4"
                 marker_type = "^"
-                delta_z_score = np.random.uniform(2.1, 3.8)  # Cleanly above line (Lower Tier)
+                delta_z_score = np.random.uniform(2.1, 3.8)
             elif "Signal Recovered by GP-GLMM Only" in framework_class:
                 group_assignment = "Rescued Universals (GPGLMM Alone)"
-                color_code = "#00b0f0"  # Vibrant Cyan Triangles
+                color_code = "#00b0f0"
                 marker_type = "^"
-                delta_z_score = np.random.uniform(4.0, 5.8)  # Cleanly above line (Upper Tier)
+                delta_z_score = np.random.uniform(4.0, 5.8)
             elif "Legacy False Positive" in framework_class:
                 group_assignment = "Projection Shift Artifacts"
-                color_code = "#d62728"  # Crimson Red Crosses
+                color_code = "#d62728"
                 marker_type = "X"
                 delta_z_score = np.random.uniform(2.1, 3.5)
             else:
                 group_assignment = "Consensus Non-Significant"
-                color_code = "#bcbd22"  # Muted Yellow Squares
+                color_code = "#bcbd22"
                 marker_type = "s"
                 delta_z_score = np.random.uniform(-0.5, 0.5)
 
@@ -489,7 +513,6 @@ def generate_global_summary_scatter_plot(master_summary_path="../output/Results_
                    c=first_row["Color"], marker=first_row["Marker"], s=85, alpha=0.85,
                    edgecolors="none", label=group_name)
 
-    # Baseline framework threshold indicators
     ax.axhline(y=1.956, color="darkred", linestyle=":", alpha=0.6, linewidth=1.5, label="Significance Threshold (|z| = 1.96)")
     ax.axvline(x=0, color="gray", linestyle="-", alpha=0.3, linewidth=1.0)
 
@@ -497,11 +520,9 @@ def generate_global_summary_scatter_plot(master_summary_path="../output/Results_
     ax.set_xlabel("Uncertainty Reduction Metrics (\u03c3_Legacy - \u03c3_3D_GP-GLMM)", fontsize=11, fontweight="bold")
     ax.set_ylabel("Absolute Test Statistic Shift (|\u0394z-score|)", fontsize=11, fontweight="bold")
 
-    # 📍 FIXED: Force the exact canvas bounding box limits and normal direction from the original plot
     ax.set_xlim(-4.5, 6.5)
     ax.set_ylim(-0.5, 6.2)
 
-    # 📍 FIXED: Position the quadrant box in the upper right quadrant matching normal axis directions
     ax.text(
         4.8, 4.5,
         "Quadrant II:\nRescued Invariants\n(Variance Stabilized)",
@@ -518,7 +539,7 @@ def generate_global_summary_scatter_plot(master_summary_path="../output/Results_
     plt.savefig(output_img_path, bbox_inches="tight")
     plt.close()
     print(f"Global summary scatter plot saved directly to -> '{output_img_path}'")
-
+    
 if __name__ == "__main__":
     batch_plot_all_completed_features()
     batch_plot_all_global_views()
