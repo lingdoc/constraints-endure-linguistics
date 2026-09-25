@@ -79,13 +79,13 @@ The forest plot displays estimated model effects (\(\beta\) coefficients) and 95
 The 3D spatial mixed models use the `gpboost` library's Gaussian Process and mixed-effects modes to handle language isolate variance structures. The tree-boosting functionality is not used in these models.
 
 ### Dependencies
-Install the required packages using the pinned project requirements file. This process automatically downloads the `pykdensity` engine from our centralized repository to handle data auditing tasks:
+Install the required packages using the pinned project requirements file. This process automatically downloads the [`pykdensity` package](https://github.com/lingdoc/pykdensity) to handle the auditing of data connectivity:
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 1. Audit dataset connectivity (Recommended)
-Run the diagnostic script to measure background spatial and structural data clustering before fitting any models. This script loops through all nested language subfolders, matches language entries with map coordinates, calculates individual density scores via the `pykdensity` package, and logs the weighted compound averages (κ) in the terminal:
+Run the diagnostic script to measure background spatial and structural data clustering before fitting any models. This script loops through all nested language subfolders, matches language entries with map coordinates, calculates individual density scores via the `pykdensity` package, and logs the weighted compound averages (κ) to the terminal:
 ```bash
 python calculate_connectivity.py
 ```
