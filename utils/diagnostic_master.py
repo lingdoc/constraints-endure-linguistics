@@ -1,19 +1,18 @@
 """
-utils/diagnostic_master.py: Master synthesis engine compiling cross-framework comparisons
-and exporting supplemental reporting tables.
+utils/diagnostic_master.py: Compiles cross-framework comparisons
+and exports supplemental tables.
 """
 import os
 import pandas as pd
 import numpy as np
 import glob
 
-# dynamic path routing anchors paths relative to this script's actual file location
+# dynamic path routing
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def generate_3d_comparison_master():
     print("Compiling cross-framework master data comparisons...")
 
-    # dynamic paths scale perfectly from anywhere in the workspace
     verkerk_file = os.path.join(base_dir, "tlu", "BT_results_summary.txt")
     run_2d_summary = os.path.join(base_dir, "output", "GPGLMM_results_191_100tree-2d.xlsx")
     run_3d_summary = os.path.join(base_dir, "output", "GPGLMM_results_191_100tree-3d.xlsx")
@@ -75,7 +74,7 @@ def generate_3d_comparison_master():
             upp_ci = float(v_row.get("brms_spa_phy_median_u_95_CI", 1.96))
             vk_se_mean = max(0.01, (upp_ci - low_ci) / 3.92)
 
-            # 📍 FIXED: Exact case matching blocks negative substring overlap leaks
+            # exact case matching (blocks negative substring overlap)
             supported_val = str(v_row.get("supported", "")).strip().lower()
             if supported_val == "sig" or supported_val == "supported":
                 v_supported_coevol = "YES"
@@ -88,7 +87,7 @@ def generate_3d_comparison_master():
             else:
                 v_brms_spatial = "NO"
 
-        # Check secondary system files as a robust tracking backup
+        # check secondary system files as a robust tracking backup
         feat_csv_path = os.path.join(synthesis_dir, f"universal_{feat}.csv")
         if os.path.exists(feat_csv_path):
             try:
@@ -122,16 +121,16 @@ def generate_3d_comparison_master():
 
     df_master = pd.DataFrame.from_dict(master_records, orient="index")
 
-    # Clean alignment across tracking vectors to avoid index mismatches
+    # alignment across tracking vectors (avoid index mismatches)
     df_master['GPGLMM_3D_IsSig'] = df_master['GPGLMM_3D_IsSig'].astype(str).str.strip().str.upper()
     df_master['GPGLMM_2D_IsSig'] = df_master['GPGLMM_2D_IsSig'].astype(str).str.strip().str.upper()
     df_master['Verkerk_Final_CoEvol'] = df_master['Verkerk_Final_CoEvol'].astype(str).str.strip().str.upper()
     df_master['Passed_Legacy_BRMS_Stage'] = pd.to_numeric(df_master['Passed_Legacy_BRMS_Stage'], errors='coerce').fillna(0).astype(int)
 
-    # Initialize clean master resolution entries
+    # master resolution entries
     df_master['Framework_Resolution_Class'] = "Consensus Non-Significant"
 
-    # 1. Group 1: Confirmed by All 3 Models (60 Core)
+    # Group 1: Confirmed by All 3 Models (60 Core)
     df_master.loc[
         (df_master['GPGLMM_3D_IsSig'] == 'YES') &
         (df_master['Passed_Legacy_BRMS_Stage'] == 1) &
@@ -139,7 +138,7 @@ def generate_3d_comparison_master():
         'Framework_Resolution_Class'
     ] = "Stable Core Framework Consensus (Passed Co-evolution & GP-GLMM)"
 
-    # 2. Group 2: Confirmed by brms and GP-GLMM (Passed Stage 1 & GP-GLMM, but FAILED Co-evolution)
+    # Group 2: Confirmed by brms and GP-GLMM (Passed brms & GP-GLMM, but FAILED Co-evolution)
     df_master.loc[
         (df_master['GPGLMM_3D_IsSig'] == 'YES') &
         (df_master['Passed_Legacy_BRMS_Stage'] == 1) &
@@ -147,28 +146,28 @@ def generate_3d_comparison_master():
         'Framework_Resolution_Class'
     ] = "Confirmed by brms and GP-GLMM (Rescued Intermediate)"
 
-    # 3. Group 3: Confirmed by GP-GLMM Alone (GP-GLMM Significant, but FAILED/Skipped in Legacy early stages)
+    # Group 3: Confirmed by GP-GLMM Alone (GP-GLMM Significant, but FAILED/Skipped in brms)
     df_master.loc[
         (df_master['GPGLMM_3D_IsSig'] == 'YES') &
         (df_master['Passed_Legacy_BRMS_Stage'] == 0),
         'Framework_Resolution_Class'
     ] = "Rescued Universal (Signal Recovered by GP-GLMM Only)"
 
-    # 4. Group 4: Coordinate Sensitivity Artifacts (Significant only in 2D Space fields)
+    # Group 4: Coordinate Sensitivity Artifacts (Significant only in 2D Space fields)
     df_master.loc[
         (df_master['GPGLMM_3D_IsSig'] == 'NO') &
         (df_master['GPGLMM_2D_IsSig'] == 'YES'),
         'Framework_Resolution_Class'
     ] = "Coordinate Sensitivity Artifacts"
 
-    # 5. Group 5: Thrown Out by GP-GLMM Alone (Passed Legacy Stage 1 but explicitly Rejected by GP-GLMM)
+    # Group 5: Thrown Out by GP-GLMM Alone (Passed brms but explicitly Rejected by GP-GLMM)
     df_master.loc[
         (df_master['GPGLMM_3D_IsSig'] == 'NO') &
         (df_master['Passed_Legacy_BRMS_Stage'] == 1),
         'Framework_Resolution_Class'
     ] = "Legacy False Positive (Cleared brms Stage 1 but Rejected by GP-GLMM)"
 
-    # 6. Group 6: Consensus Non-Significant (Failed both structural pipelines entirely)
+    # Group 6: Consensus Non-Significant (Failed both structural pipelines entirely)
     df_master.loc[
         (df_master['GPGLMM_3D_IsSig'] == 'NO') &
         (df_master['Passed_Legacy_BRMS_Stage'] == 0) &
@@ -182,7 +181,7 @@ def generate_3d_comparison_master():
     os.makedirs(os.path.dirname(output_master), exist_ok=True)
     df_master.to_excel(output_master, index_label="Feature_ID")
 
-    print("\nFramework-Level Comparison Analysis Finalized")
+    print("\nFramework-Level Comparison Analysis")
     print("==================================================================")
     print(f" Total Features Evaluated                     : {len(df_master)}")
     print(f" Passed Legacy brms Stage 1 Filter            : {legacy_pass_count} / 191")
@@ -263,6 +262,135 @@ def generate_supplementary_master_table():
     df_supplementary.to_excel(output_xlsx, index=False, sheet_name="Table S1 - Global Features")
     print(f"Supplementary table successfully written to: '{output_xlsx}'")
 
+def check_model_differences():
+    """
+    Groups results by feature to create a single row per universal,
+    mapping brms parametric features against gpglmm metrics.
+    """
+    utils_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.dirname(utils_dir)
+    data_folder = os.path.join(repo_root, "output", "feature_synthesis")
+
+    # parametric_summary file
+    output_summary = os.path.join(repo_root, "output", "parametric_summary.csv")
+
+    files = sorted(glob.glob(os.path.join(data_folder, "*.csv")))
+
+    if not files:
+        print(f"no files found in: {os.path.relpath(data_folder, repo_root)}")
+        return
+
+    print(f"Mapping range-bounded densities across {len(files)} universals...")
+    feature_results = []
+
+    for file_path in files:
+        feature_id = os.path.basename(file_path).replace(".csv", "")
+        df = pd.read_csv(file_path)
+        df.columns = df.columns.str.strip()
+
+        total_languages = len(df)
+        df_isolates = df[df['Isolate_Flag'] == 1].copy()
+        total_isolates = len(df_isolates)
+
+        if total_isolates < 2:
+            continue
+
+        # brms metrics
+        brms_upper_collapse = len(df_isolates[
+            (df_isolates['Verkerk_BRMS_Mean'] >= 5.0) & (df_isolates['Verkerk_BRMS_Mean'] <= 8.5)
+        ])
+        brms_lower_collapse = len(df_isolates[
+            (df_isolates['Verkerk_BRMS_Mean'] >= -6.0) & (df_isolates['Verkerk_BRMS_Mean'] <= -3.5)
+        ])
+        brms_max_collapse = max(brms_upper_collapse, brms_lower_collapse)
+        brms_collapse_pct = brms_max_collapse / total_isolates
+
+        brms_errors_ceiling = len(df_isolates[
+            (df_isolates['Verkerk_BRMS_SE'] >= 4.5) & (df_isolates['Verkerk_BRMS_SE'] <= 7.5)
+        ])
+        brms_explosion_pct = brms_errors_ceiling / total_isolates
+
+        # gpglmm metrics
+        gpglmm_upper_collapse = len(df_isolates[
+            (df_isolates['GPGLMM_3D_Mean'] >= 5.0) & (df_isolates['GPGLMM_3D_Mean'] <= 8.5)
+        ])
+        gpglmm_lower_collapse = len(df_isolates[
+            (df_isolates['GPGLMM_3D_Mean'] >= -6.0) & (df_isolates['GPGLMM_3D_Mean'] <= -3.5)
+        ])
+        gpglmm_max_collapse = max(gpglmm_upper_collapse, gpglmm_lower_collapse)
+        gpglmm_collapse_pct = gpglmm_max_collapse / total_isolates
+
+        gpglmm_errors_ceiling = len(df_isolates[
+            (df_isolates['GPGLMM_3D_SE'] >= 4.5) & (df_isolates['GPGLMM_3D_SE'] <= 7.5)
+        ])
+        gpglmm_explosion_pct = gpglmm_errors_ceiling / total_isolates
+
+        # track the overall mean values to control for unconstrained tail scale widths
+        mean_gpglmm_mean = df_isolates['GPGLMM_3D_Mean'].mean()
+        mean_gpglmm_se = df_isolates['GPGLMM_3D_SE'].mean()
+
+        # classification matrix
+        has_brms_collapse = brms_collapse_pct >= 0.35
+        has_brms_explosion = brms_explosion_pct >= 0.35
+
+        if has_brms_collapse and has_brms_explosion:
+            brms_status = "both"
+        elif has_brms_collapse:
+            brms_status = "collapse"
+        elif has_brms_explosion:
+            brms_status = "explosion"
+        else:
+            brms_status = "stable"
+
+        # fixed tail adjustment, filters out wide logistic tails where the mean has driven
+        # to the categorical floor (<= -20.0 or >= 20.0) in response to true divergence
+        is_gpglmm_tail_edge = abs(mean_gpglmm_mean) >= 20.0
+
+        has_gpglmm_collapse = (gpglmm_collapse_pct >= 0.35) and (mean_gpglmm_se > 2.0) and not is_gpglmm_tail_edge
+        has_gpglmm_explosion = (gpglmm_explosion_pct >= 0.35) and not is_gpglmm_tail_edge
+
+        if has_gpglmm_collapse and has_gpglmm_explosion:
+            gpglmm_status = "both"
+        elif has_gpglmm_collapse:
+            gpglmm_status = "collapse"
+        elif has_gpglmm_explosion:
+            gpglmm_status = "explosion"
+        else:
+            gpglmm_status = "stable"
+
+        feature_results.append({
+            "universal_feature_id": feature_id,
+            "total_languages": total_languages,
+            "sample_size_isolates": total_isolates,
+            "brms_status": brms_status,
+            "gpglmm_status": gpglmm_status,
+            "brms_collapse_pct": round(brms_collapse_pct * 100, 1),
+            "brms_explosion_pct": round(brms_explosion_pct * 100, 1),
+            "gpglmm_collapse_pct": round(gpglmm_collapse_pct * 100, 1),
+            "gpglmm_explosion_pct": round(gpglmm_explosion_pct * 100, 1)
+        })
+
+    # save results to parametric_summary csv
+    summary_df = pd.DataFrame(feature_results)
+    summary_df.to_csv(output_summary, index=False)
+
+    print(f"done. mapped comparison table saved to: {os.path.relpath(output_summary, repo_root)}")
+
+    # summary report
+    print("\n" + "-"*50 + "\n   Cross-model volatility summary\n" + "-"*50)
+
+    brms_counts = summary_df["brms_status"].value_counts().reindex(["stable", "explosion", "collapse", "both"], fill_value=0)
+    gpglmm_counts = summary_df["gpglmm_status"].value_counts().reindex(["stable", "explosion", "collapse", "both"], fill_value=0)
+
+    print(f" Failure State   | brms Count | GPGLMM Count ")
+    print(f" ----------------|-------------------|---------------------")
+    print(f" Stable Profile  | {brms_counts['stable']:<17} | {gpglmm_counts['stable']:<19}")
+    print(f" Explosion Limit | {brms_counts['explosion']:<17} | {gpglmm_counts['explosion']:<19}")
+    print(f" Intercept Floor | {brms_counts['collapse']:<17} | {gpglmm_counts['collapse']:<19}")
+    print(f" Both Violations | {brms_counts['both']:<17} | {gpglmm_counts['both']:<19}")
+    print("="*50 + "\n")
+
 if __name__ == "__main__":
     generate_3d_comparison_master()
     generate_supplementary_master_table()
+    check_model_differences()
