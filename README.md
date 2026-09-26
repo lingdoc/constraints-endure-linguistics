@@ -85,7 +85,7 @@ When the `brms` sampling algorithm runs out of family branch anchors on isolates
 | **Explosion Limit** | 27 | 0 | Uncertainty boundaries ballooned and pinned against safety ceilings due to missing tree regularizers. |
 | **Intercept Floor** | 8 | 0 | Estimates experienced near-total collapse, flatlining to a uniform value layer. |
 | **Both Violations** | 22 | 0 | Severe concurrent breakdown showing simultaneous estimate flatlining and inflated error caps. |
-| **Total Swaps Swept** | **191** | **191** | **Diagnostic diagnostic check complete.** |
+| **Total** | **191** | **191** |  |
 
 *Data compiled automatically by `utils/diagnostic_master.py` and saved to `output/parametric_summary.csv`.*
 
