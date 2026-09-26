@@ -79,7 +79,7 @@ Evaluating the parameters across geographically isolated language zones reveals 
 
 When the `brms` sampling algorithm runs out of family branch anchors on isolates, it hits logistic scale walls, causing runaway error explosions, parameter flatlines, or dual-mode structural failures. By contrast, anchoring isolate variance via a continuous 3D spatial Gaussian Process (`GP-GLMM`) insulates the network fields, supporting stable profiles across all 191 features:
 
-| Parameter Failure State | Legacy `brms` Profile | Robust `GP-GLMM` Profile | Methodological & Structural Meaning |
+| Parameter Failure State | `brms` | `GP-GLMM` | Methodological & Structural Meaning |
 | :--- | :---: | :---: | :--- |
 | **Stable Profile** | 134 | **191** | Model estimates and intervals mixed cleanly within normal unconstrained bounds. |
 | **Explosion Limit** | 27 | 0 | Uncertainty boundaries ballooned and pinned against safety ceilings due to missing tree regularizers. |
