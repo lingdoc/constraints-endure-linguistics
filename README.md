@@ -17,6 +17,7 @@ The current architecture implements a series of 3D spatial Gaussian Process Gene
 │   ├── global_synthesis_scatter.png        # comparison scatter plot for all universals
 │   ├── GPGLMM_results_191_100tree-2d.xlsx  # summary metrics for 2D coord model
 │   ├── GPGLMM_results_191_100tree-3d.xlsx  # summary metrics for 3D coord model
+│   ├── parametric_summary.csv              # cross-model volatility summary
 │   ├── Results_3D_Master_Synthesis.xlsx    # main data sheet sorting features into 5 groups
 │   ├── Supplementary_Table_S1_Global..xlsx # full supplementary data sheet
 │   ├── Table_A_Consensus.xlsx              # universals confirmed by all models
@@ -65,11 +66,30 @@ This scatter plot maps out where the GP-GLMM agrees or disagrees with the previo
 
 ![Meta-Analysis Comparison Map](./output/global_synthesis_scatter.png)
 
-*   **Stable Core Consensus (Deep Blue Circles):** 60 features confidently confirmed by both old and new modeling approaches.
+*   **Stable Core Consensus (Deep Blue Circles):** 60 features confirmed by both old and new modeling approaches.
 *   **Rescued Universals (brms + gpglmm) (Royal Blue Triangles):** 28 intermediate features saved after the original study's final checks dropped them.
-*   **Rescued Universals (gpglmm Alone) (Cyan Triangles):** 25 brand-new universal rules discovered exclusively by the GP-GLMM.
-*   **Projection Shift Artifacts (Crimson Red Crosses):** Features that looked like true universals on flat maps but were proven to be geographical side effects by GP-GLMM.
-*   **Consensus Non-Significant (Muted Yellow Squares):** Background traits where all models agree there is no meaningful pattern.
+*   **Rescued Universals (gpglmm Alone) (Cyan Triangles):** 25 universal rules discovered exclusively by the GP-GLMM.
+*   **Projection Shift Artifacts (Crimson Red Crosses):** Features that looked like true universals on flat maps but considered as geographical side effects by GP-GLMM.
+*   **Consensus Non-Significant (Muted Yellow Squares):** Features where all models agree there is no meaningful pattern.
+
+<details>
+<summary><b>Architectural Volatility Matrix (brms vs. GP-GLMM)</b></summary>
+
+Evaluating the parameters across geographically isolated language zones reveals that the `brms` model faces issues across **29.8% of all features tested**.
+
+When the `brms` sampling algorithm runs out of family branch anchors on isolates, it hits logistic scale walls, causing runaway error explosions, parameter flatlines, or dual-mode structural failures. By contrast, anchoring isolate variance via a continuous 3D spatial Gaussian Process (`GP-GLMM`) insulates the network fields, supporting stable profiles across all 191 features:
+
+| Parameter Failure State | Legacy `brms` Profile | Robust `GP-GLMM` Profile | Methodological & Structural Meaning |
+| :--- | :---: | :---: | :--- |
+| **Stable Profile** | 134 | **191** | Model estimates and intervals mixed cleanly within normal unconstrained bounds. |
+| **Explosion Limit** | 27 | 0 | Uncertainty boundaries ballooned and pinned against safety ceilings due to missing tree regularizers. |
+| **Intercept Floor** | 8 | 0 | Estimates experienced near-total collapse, flatlining to a uniform value layer. |
+| **Both Violations** | 22 | 0 | Severe concurrent breakdown showing simultaneous estimate flatlining and inflated error caps. |
+| **Total Swaps Swept** | **191** | **191** | **Diagnostic diagnostic check complete.** |
+
+*Data compiled automatically by `utils/diagnostic_master.py` and saved to `output/parametric_summary.csv`.*
+
+</details>
 
 ### Distribution of validated universals
 The forest plot displays estimated model effects (\(\beta\) coefficients) and 95% confidence intervals for all 113 confirmed universals, split by language domain and color-coded to match final groups:
