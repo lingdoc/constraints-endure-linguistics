@@ -113,19 +113,19 @@ python calculate_connectivity.py
 ```
 
 ### 2. Fit the frequentist model
-Run the core pipeline script to validate the data structures, build the GP-GLMMs via `gpboost`, and export the raw trajectory parameters:
+Run the core pipeline script to validate the data structures, build the GP-GLMMs via `gpboost`, and export the trajectory parameters:
 ```bash
 python run_gpglmm.py
 ```
 
 ### 3. Compare the frameworks
-Run the tracking diagnostic script to aggregate the GP-GLMM outputs with the original study's metrics and sort all 191 features into final consensus groups:
+Run the tracking diagnostic script to aggregate the GP-GLMM outputs with the original study's metrics and sort all 191 features into final groups:
 ```bash
 python utils/diagnostic_master.py
 ```
 
 ### 4. Generate charts
-Run the master plotting script to recreate the final visual assets, including the global framework comparison scatter plot and the distribution forest plots:
+Run the master plotting script to recreate the final visuals, including the framework comparison scatter plot and the distribution forest plots:
 ```bash
 python utils/plotting_master.py
 ```
