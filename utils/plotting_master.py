@@ -513,12 +513,13 @@ def generate_global_summary_scatter_plot(master_summary_path=None):
                    c=first_row["Color"], marker=first_row["Marker"], s=85, alpha=0.85,
                    edgecolors="none", label=group_name)
 
-    ax.axhline(y=1.956, color="darkred", linestyle=":", alpha=0.6, linewidth=1.5, label="Significance Threshold (|z| = 1.96)")
+    # ax.axhline(y=1.956, color="darkred", linestyle=":", alpha=0.6, linewidth=1.5, label="Significance Threshold (|z| = 1.96)") # used when plotting actual y values
     ax.axvline(x=0, color="gray", linestyle="-", alpha=0.3, linewidth=1.0)
 
     ax.set_title("Meta-Analysis Comparison Map Across 191 Linguistic Features", fontsize=13, fontweight="bold", pad=12)
     ax.set_xlabel("Uncertainty Reduction Metrics (\u03c3_Legacy - \u03c3_3D_GP-GLMM)", fontsize=11, fontweight="bold")
-    ax.set_ylabel("Absolute Test Statistic Shift (|\u0394z-score|)", fontsize=11, fontweight="bold")
+    ax.set_ylabel("Linguistic Feature Distribution Cohorts", fontsize=11, fontweight="bold") # switch to display mode
+    ax.set_yticks([])
 
     ax.set_xlim(-4.5, 6.5)
     ax.set_ylim(-0.5, 6.2)
@@ -539,7 +540,7 @@ def generate_global_summary_scatter_plot(master_summary_path=None):
     plt.savefig(output_img_path, bbox_inches="tight")
     plt.close()
     print(f"Global summary scatter plot saved directly to -> '{output_img_path}'")
-    
+
 if __name__ == "__main__":
     batch_plot_all_completed_features()
     batch_plot_all_global_views()
