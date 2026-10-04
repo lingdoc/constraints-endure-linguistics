@@ -13,7 +13,7 @@ from scipy import stats
 
 # dynamic path routing
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-master_summary_default = os.path.join(base_dir, "output", "Results_3D_Master_Synthesis.xlsx")
+master_summary_default = os.path.join(base_dir, "output", "Results_3D_Master_Synthesis-macro.xlsx")
 
 def generate_empirical_stacked_contrast(feature_id="0582KA", master_summary_path=None):
     """
@@ -399,7 +399,7 @@ def generate_proportional_quadrant_plot(master_file=None, output_dir=None):
         Line2D([], [], marker='o', color='w', markerfacecolor='#1f4e79', markeredgecolor='black', markersize=6, label='Cross-framework Consensus'),
         Line2D([], [], marker='o', color='w', markerfacecolor='#0070c0', markeredgecolor='black', markersize=6, label='Late-Stage Rescued (Passed Stage 1 Only)'),
         Line2D([], [], marker='o', color='w', markerfacecolor='#00b0f0', markeredgecolor='black', markersize=6, label='Early-Stage Rescued (GPGLMM Discovery)'),
-        Line2D([], [], marker='o', color='w', markerfacecolor='#7f7f7f', markeredgecolor='black', markersize=6, label='Spatial Contact Noise')
+        # Line2D([], [], marker='o', color='w', markerfacecolor='#7f7f7f', markeredgecolor='black', markersize=6, label='Spatial Contact Noise')
     ]
     fig.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, 0.946), ncol=2, frameon=False, fontsize=8)
     fig.text(0.49, 0.03, "Estimated Fixed-Effect Slope Parameter (Beta Coefficient)", fontsize=9, fontweight='bold', ha='center', va='bottom')

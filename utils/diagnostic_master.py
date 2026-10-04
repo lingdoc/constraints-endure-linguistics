@@ -14,25 +14,22 @@ def generate_3d_comparison_master():
     print("Compiling cross-framework master data comparisons...")
 
     verkerk_file = os.path.join(base_dir, "tlu", "BT_results_summary.txt")
-    run_2d_summary = os.path.join(base_dir, "output", "GPGLMM_results_191_100tree-2d.xlsx")
-    run_3d_summary = os.path.join(base_dir, "output", "GPGLMM_results_191_100tree-3d.xlsx")
-    synthesis_dir = os.path.join(base_dir, "output", "feature_synthesis")
-    output_master = os.path.join(base_dir, "output", "Results_3D_Master_Synthesis.xlsx")
+    run_3d_summary = os.path.join(base_dir, "output", "GPGLMM_results_191_100tree-3d-group.xlsx")
+    synthesis_dir = os.path.join(base_dir, "output", "feature_synthesis_macro")
+    output_master = os.path.join(base_dir, "output", "Results_3D_Master_Synthesis-macro.xlsx")
 
-    missing = [f for f in [verkerk_file, run_2d_summary, run_3d_summary] if not os.path.exists(f)]
+    missing = [f for f in [verkerk_file, run_3d_summary] if not os.path.exists(f)]
     if missing:
         print(f"Error: Missing summary files in workspace: {missing}")
         return
 
     df_v = pd.read_csv(verkerk_file, sep="\t")
-    df_2d = pd.read_excel(run_2d_summary)
     df_3d = pd.read_excel(run_3d_summary)
 
     df_v.rename(columns={"code": "Feature_ID"}, inplace=True)
-    df_2d.rename(columns={df_2d.columns[0]: "Feature_ID"}, inplace=True)
     df_3d.rename(columns={df_3d.columns[0]: "Feature_ID"}, inplace=True)
 
-    for df in [df_v, df_2d, df_3d]:
+    for df in [df_v, df_3d]:
         df["Feature_ID"] = df["Feature_ID"].astype(str).str.strip().str.lower()
         df.set_index("Feature_ID", inplace=True)
 
@@ -45,14 +42,6 @@ def generate_3d_comparison_master():
         se_3d = float(row_3d.get("GPGLMM_Std. err.", 1.0))
         p_3d = float(row_3d.get("GPGLMM_P>|z|", 1.0))
         is_sig_3d = str(row_3d.get("GPGLMM_sig", "NO")).strip().upper() == "YES"
-
-        beta_2d, se_2d, p_2d, is_sig_2d = np.nan, np.nan, np.nan, False
-        if feat in df_2d.index:
-            row_2d = df_2d.loc[feat]
-            beta_2d = float(row_2d.get("GPGLMM_Param.", 0.0))
-            se_2d = float(row_2d.get("GPGLMM_Std. err.", 1.0))
-            p_2d = float(row_2d.get("GPGLMM_P>|z|", 1.0))
-            is_sig_2d = str(row_2d.get("GPGLMM_sig", "NO")).strip().upper() == "YES"
 
         v_supported_coevol = "NO"
         v_brms_spatial = "NO"
@@ -108,10 +97,6 @@ def generate_3d_comparison_master():
             "Verkerk_BRMS_SE": vk_se_mean,
             "Verkerk_brms_Spatial_Stage1": v_brms_spatial,
             "Verkerk_Final_CoEvol": v_supported_coevol,
-            "GPGLMM_2D_Beta": beta_2d,
-            "GPGLMM_2D_SE": se_2d,
-            "GPGLMM_2D_PValue": p_2d,
-            "GPGLMM_2D_IsSig": "YES" if is_sig_2d else "NO",
             "GPGLMM_3D_Beta": beta_3d,
             "GPGLMM_3D_SE": se_3d,
             "GPGLMM_3D_PValue": p_3d,
@@ -123,7 +108,6 @@ def generate_3d_comparison_master():
 
     # alignment across tracking vectors (avoid index mismatches)
     df_master['GPGLMM_3D_IsSig'] = df_master['GPGLMM_3D_IsSig'].astype(str).str.strip().str.upper()
-    df_master['GPGLMM_2D_IsSig'] = df_master['GPGLMM_2D_IsSig'].astype(str).str.strip().str.upper()
     df_master['Verkerk_Final_CoEvol'] = df_master['Verkerk_Final_CoEvol'].astype(str).str.strip().str.upper()
     df_master['Passed_Legacy_BRMS_Stage'] = pd.to_numeric(df_master['Passed_Legacy_BRMS_Stage'], errors='coerce').fillna(0).astype(int)
 
@@ -153,12 +137,12 @@ def generate_3d_comparison_master():
         'Framework_Resolution_Class'
     ] = "Rescued Universal (Signal Recovered by GP-GLMM Only)"
 
-    # Group 4: Coordinate Sensitivity Artifacts (Significant only in 2D Space fields)
-    df_master.loc[
-        (df_master['GPGLMM_3D_IsSig'] == 'NO') &
-        (df_master['GPGLMM_2D_IsSig'] == 'YES'),
-        'Framework_Resolution_Class'
-    ] = "Coordinate Sensitivity Artifacts"
+    # # Group 4: Coordinate Sensitivity Artifacts (Significant only in 2D Space fields)
+    # df_master.loc[
+    #     (df_master['GPGLMM_3D_IsSig'] == 'NO') &
+    #     (df_master['GPGLMM_2D_IsSig'] == 'YES'),
+    #     'Framework_Resolution_Class'
+    # ] = "Coordinate Sensitivity Artifacts"
 
     # Group 5: Thrown Out by GP-GLMM Alone (Passed brms but explicitly Rejected by GP-GLMM)
     df_master.loc[
@@ -170,8 +154,7 @@ def generate_3d_comparison_master():
     # Group 6: Consensus Non-Significant (Failed both structural pipelines entirely)
     df_master.loc[
         (df_master['GPGLMM_3D_IsSig'] == 'NO') &
-        (df_master['Passed_Legacy_BRMS_Stage'] == 0) &
-        (df_master['GPGLMM_2D_IsSig'] == 'NO'),
+        (df_master['Passed_Legacy_BRMS_Stage'] == 0),
         'Framework_Resolution_Class'
     ] = "Consensus Non-Significant"
 
@@ -241,9 +224,9 @@ def generate_supplementary_master_table():
         elif len(global_records) < 113:
             group_assignment = "Rescued Universals (3D Bounded)"
             is_sig = "Significant (3D Only)"
-        elif len(global_records) < 119:
-            group_assignment = "Polar Distortion Artifacts"
-            is_sig = "Significant (2D Only)"
+        # elif len(global_records) < 119:
+        #     group_assignment = "Polar Distortion Artifacts"
+        #     is_sig = "Significant (2D Only)"
 
         global_records.append({
             "Feature_ID": feat_id,

@@ -186,34 +186,35 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
             branch_factor = sub_branch_series.astype('category').cat.codes.to_numpy()
 
             # reassemble the complete multi-level grouping matrix
+            # Random Intercept columns: Family, Macroarea, Branch
             loop_matrix_state = np.column_stack((family_factor, macro_factor, branch_factor)).astype(float)
 
+            # explicitly pass the slope variable and link it to Macroarea (column 2)
+            rand_slope_variable = X                          # 1D array of independent variable
+            group_mapping_index = [2]                        # 1-indexed link pointing to column 2 (macroarea)
+
             try:
-                # implement a Bernoulli Logit GP-GLMM to capture:
-                # 1. structured dependencies (via group_data)
-                # 2. continuous spatial autocorrelation (via GP kernel)
+                # Initialize model using correct gpboost keyword parameters
                 gp_model = gpb.GPModel(
-                    group_data=loop_matrix_state, # random effect intercepts (family, macroarea, branch)
-                    gp_coords=coords, # lat/long transformed to 3d coordinates for spatial GP component
-                    cov_function="exponential", # spatial correlation decays exponentially with distance
-                    likelihood="bernoulli_logit", # binary DV (presence/absence) via logit link
-                    num_parallel_threads=8 # optimized for 32-core cpu with 4 workers
+                    group_data=loop_matrix_state,            # Multi-level random intercepts matrix
+                    group_rand_coef_data=rand_slope_variable, # Random slope vector (Replaces rand_slopes_config dict)
+                    ind_effect_group_rand_coef=group_mapping_index, # Binds the slope to group level column 2
+                    gp_coords=coords,                        # Geocentric continuous spatial GP coords
+                    cov_function="exponential",
+                    likelihood="bernoulli_logit",
+                    num_parallel_threads=8
                 )
-                # configure L-BFGS optimizer
+
                 gp_model.set_optim_params(params={
-                    "optimizer_cov": "lbfgs", # maximize marginal likelihood via L-BFGS
-                    "maxit": 35, # maximum iterations allowed for convergence
-                    # Order: [var_family, var_macroarea, var_branch, var_spatial, range_spatial]
-                    # because coordinates are now represented in scale kilometers,
-                    # we increase the range parameter search floor threshold buffer setting
-                    "init_cov_pars": [0.2, 0.2, 0.2, 0.5, 500.0],
-                    ## if using 2d spatial matrix, replace "init_cov_pars" with the code below:
-                    # "init_cov_pars": [0.2, 0.2, 0.2, 0.5, 1.5],
+                    "optimizer_cov": "lbfgs",
+                    "maxit": 45,                             # Raised to handle the slope parameter variance search
+                    # Parameter Ordering footprint:
+                    # [var_family, var_macroarea_int, var_macroarea_slope, var_branch, var_spatial, range_spatial]
+                    "init_cov_pars": [0.2, 0.2, 0.2, 0.2, 0.5, 500.0],
                     "convergence_criterion": "relative_change_in_parameters",
-                    "delta_rel_conv": 1e-3 # convergence threshold
+                    "delta_rel_conv": 1e-3
                 })
 
-                # fit parameters over the newly established tree topology slice
                 gp_model.fit(y=y, X=X_with_intercept)
 
                 coefficients = gp_model.get_coef(std_err=True, format_pandas=True)
@@ -229,22 +230,23 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
 
                     params.append(p_val)
                     ses.append(s_val)
-                    # data logging
+
                     trajectory_records.append({
                         "Feature": univ,
                         "Tree_Sample_Index": iter_id,
                         "Beta_Slope": p_val,
                         "Standard_Error": s_val
                     })
-                    # extract random effects for this specific tree step
+
+                    # Prediction layer updated to mirror initialization configurations
                     preds = gp_model.predict(
                         X_pred=X_with_intercept,
                         group_data_pred=loop_matrix_state,
+                        group_rand_coef_data_pred=rand_slope_variable, # Mirror random slopes into prediction layer
                         gp_coords_pred=coords,
                         predict_response=False,
                         predict_var=False
                     )
-                    # accumulate results in memory regarding the distribution variance shape
                     latent_distribution_accumulator[f"Tree_{iter_id:03d}_Mean"] = preds['mu']
 
             except Exception as e:
@@ -258,14 +260,14 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
 
         # save the single consolidated matrix
         df_latent_dist = pd.DataFrame(latent_distribution_accumulator)
-        latent_out_path = os.path.join(output_dir, f"gpglmm_latent_distribution_{univ.lower()}.parquet")
-        df_latent_dist.to_parquet(latent_out_path, index=False)
+        latent_out_path = os.path.join(output_dir, f"gpglmm_latent_distribution_{univ.lower()}.csv")
+        df_latent_dist.to_csv(latent_out_path, index=False)
 
         # save tracking estimates
         if trajectory_records:
             df_traj = pd.DataFrame(trajectory_records)
-            traj_out_path = os.path.join(output_dir, f"gpglmm_100tree_trajectory_{univ.lower()}.parquet")
-            df_traj.to_parquet(traj_out_path, index=False)
+            traj_out_path = os.path.join(output_dir, f"gpglmm_100tree_trajectory_{univ.lower()}.csv")
+            df_traj.to_csv(traj_out_path, index=False)
 
         # compute final statistical averages across the full MCMC tree matrix distribution
         final_param = float(np.median(params))

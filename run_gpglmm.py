@@ -28,16 +28,16 @@ def archive_old_run(target_dir="output/model_predictions", completed_features=No
         completed_features = set()
 
     if os.path.exists(target_dir):
-        old_files = [f for f in os.listdir(target_dir) if f.endswith('.parquet')]
+        old_files = [f for f in os.listdir(target_dir) if f.endswith('.csv')]
         if old_files:
             backup_dir = "output/model_predictions_backup"
 
             # Identify files to clear out vs files to keep based on resume state
             files_to_archive = []
             for f in old_files:
-                # Extracts feature name from: gpglmm_latent_distribution_[feature].parquet
-                # or gpglmm_100tree_trajectory_[feature].parquet
-                feat_token = f.replace("gpglmm_latent_distribution_", "").replace("gpglmm_100tree_trajectory_", "").replace(".parquet", "").upper()
+                # Extracts feature name from: gpglmm_latent_distribution_[feature].csv
+                # or gpglmm_100tree_trajectory_[feature].csv
+                feat_token = f.replace("gpglmm_latent_distribution_", "").replace("gpglmm_100tree_trajectory_", "").replace(".csv", "").upper()
                 if feat_token not in completed_features:
                     files_to_archive.append(f)
 
@@ -75,7 +75,7 @@ def save_checkpoint(xdict, output_excel):
     os.replace(temp_excel, output_excel)
 
 if __name__ == "__main__":
-    output_excel = "output/GPGLMM_results_191_100tree-3d.xlsx"
+    output_excel = "output/GPGLMM_results_191_100tree-3d-group.xlsx"
     predictions_folder = "output/model_predictions"
     os.makedirs("output", exist_ok=True)
 
@@ -136,6 +136,9 @@ if __name__ == "__main__":
     if not all_raw_files:
         print(" Error: Could not locate any raw '*data.txt' feature files inside your 'tlu/' folder structure.")
         exit()
+
+    # featurescheck = ['0001_or_2aKA', '0001_or_2bKA', '0005KA', '0008KA', '0015aKA', '0015bKA', '0045KA', '0055KA', '0056KA']
+    # files_to_process = [x for x in files_to_process if any(sub in x for sub in featurescheck)]
 
     TARGET_NTREES = 100
     MAX_WORKERS = 4  # Balanced worker allocation for 32 threads total (4 x 8 threads)
