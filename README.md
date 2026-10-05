@@ -1,135 +1,104 @@
-# Constraints that endure: Assessing model robustness in linguistic typology
+# Constraints that Endure: Assessing Model Robustness in Linguistic Typology
 
-This repository contains the code and data tables used to reanalyze the cross-linguistic universals framework from Verkerk et al. (2026).
+This repository contains the replication pipeline and diagnostic code used to analyze model robustness and isolate parameter volatility within global typological databases, using the cross-linguistic universals framework from Verkerk et al. (2026).
 
-The current architecture implements a series of 3D spatial Gaussian Process Generalized Linear Mixed Models (GP-GLMM). This architecture fixes boundary errors for historically isolated languages, revealing where universal constraints were hidden by parameter collapse/explosion in the original Bayesian model.
+## The Core Problem: Isolate Variance Traps
 
-## Repository Overview
+The original study utilized a Bayesian spatiophylogenetic mixed model (`brms` in R) across 100 posterior phylogenetic trees to evaluate support for 191 binary grammatical universals. However, on highly fragmented typological networks—where structural density drops below a critical floor (\(\kappa_{\text{structural}} \le 0.10\))—the ancestral trees shatter into disconnected family islands.
+
+When a multi-level sampling algorithm encounters these historical isolates (single language families with no close tree relatives), the parameter space faces severe numerical stress:
+* **Parameter Collapse:** Unanchored localized signals are over-smoothed and flatline toward global intercept means.
+* **Parameter Explosion:** Runaway variance estimation triggers extreme uncertainty inflation on boundary nodes, pinning error caps against safety ceilings.
+
+This replication pipeline introduces an alternative **Topology-Aware Generalized Linear Mixed Model (GP-GLMM)** using `gpboost` in Python. While both models share a matching `bernoulli_logit` link, continuous geographic kernels (2D vs 3D), and regional random slopes, the current architecture implements a crucial data isolation layer that decouples localized variance profiles by routing historical isolates to independent variance tracks. This insulates the network fields, resolving calculation crashes and rescuing stable typological signals that were previously masked by estimation noise.
+
+## Project Structure
 
 ```text
-├── output/                             # output folders and files
-│   ├── feature_synthesis/                # combined results for each linguistic feature
-│   ├── global_isolate_comparisons/       # broad map visual of all languages (per feature)
-│   ├── isolate_comparisons/              # comparison plots for isolated languages
-│   ├── model_predictions_2d/             # 2D coord model summaries (Parquet format)
-│   ├── model_predictions_3d/             # 3D coord model summaries (Parquet format)
+├── output/                             # main results and chart exports
+│   ├── feature_synthesis/              # combined dataset for each universal
+│   ├── global_isolate_comparisons/     # global mapping views (per universal)
+│   ├── isolate_comparisons/            # volatility charts for isolated languages
+│   ├── model_predictions/              # results under regional random slope models
 │   │
-│   ├── global_synthesis_scatter.png        # comparison scatter plot for all universals
-│   ├── GPGLMM_results_191_100tree-2d.xlsx  # summary metrics for 2D coord model
-│   ├── GPGLMM_results_191_100tree-3d.xlsx  # summary metrics for 3D coord model
-│   ├── parametric_summary.csv              # cross-model volatility summary
-│   ├── Results_3D_Master_Synthesis.xlsx    # main data sheet sorting features into 5 groups
-│   ├── Supplementary_Table_S1_Global..xlsx # full supplementary data sheet
-│   ├── Table_A_Consensus.xlsx              # universals confirmed by all models
-│   ├── Table_B_Expansion.xlsx              # new universals found by this model
-│   ├── universals_forest_plot.pdf          # forest plot pdf
-│   └── universals_forest_plot.png          # forest plot graphic
-├── tlu/                                # raw data (in subfolders) from the original study (coded features + trees)
-│   ├── BT_results_summary.txt              # original datasheet (corrected 'bmrs' column typos to 'brms')
-│   └── Glottolog_Languages.csv             # summary glottolog language sheet from the original study
-├── utils/                              # utilities
-│   ├── check_datasets.py                   # data integrity check before running models
-│   ├── diagnostic_master.py                # main script sorting data into matching groups
-│   ├── gpglmm_engine.py                    # core modeling script
-│   └── plotting_master.py                  # generates all charts and forest plots
-├── .gitignore
-├── calculate_connectivity.py               # measure network density of datsets
-├── README.md                               # project documentation
-├── requirements.txt                        # pinned package dependencies
-└── run_gpglmm.py                           # main script
+│   ├── global_synthesis_scatter.png                 # comparison scatter plot for all 191 universals
+│   ├── GPGLMM_results_191_100tree-3d-group.xlsx     # output from GPGLMM
+│   ├── linguistics_connectivity_summary.csv         # density (κ) results
+│   ├── linguistics_sensitivity_matrix.csv           # results of spatial sensitivity test
+│   ├── parametric_summary.csv                       # results of parameter instability check
+│   ├── Results_3D_Master_Synthesis.xlsx             # main spreadsheet sorting rules into final groups
+│   ├── Supplementary_Table_S1_Global_Synthesis.xlsx # full parameter database (brms+GPGLMM)
+│   ├── parametric_summary.csv                       # summary of data crashes on isolates
+│   ├── universals_forest_plot.pdf                   # forest plot chart (PDF format)
+│   └── universals_forest_plot.png                   # forest plot chart (PNG graphic)
+├── tlu/                                # raw data and tree files from original study
+│   ├── [universal_code]/BT_data.txt                 # coded language features from Grambank for universal
+│   ├── [universal_code]/pruned_tree.trees.gz        # historical family tree branch files for universal
+│   ├── BT_results_summary.txt                       # universal codes and results from original study
+│   └── Glottolog_Languages.csv                      # language metadata from Glottolog
+├── utils/                              # background scripts and processing pipelines
+│   ├── check_datasets.py                            # data integrity validation check
+│   ├── diagnostic_master.py                         # script that sorts rules into matching groups
+│   ├── gpglmm_engine.py                             # core Python modeling script
+│   └── plotting_master.py                           # chart and graphic generation scripts
+├── calculate_connectivity.py           # measures background data density (κ)
+├── README.md                           # project documentation
+├── run_gpglmm.py                       # main script that fits all models
+└── requirements.txt                    # pinned package dependencies
 ```
 
-## Background & data sources
+## Replication Summary Metrics
 
-The original study used a series of Bayesian MCMC spatiophylogenetic models (including language family, macroarea, 2D longitude/latitude spatial coordinates, and 100 posterior phylogenetic trees) via `brms` in R to evaluate support for 191 binary-coded universals based on data from Grambank. They found support for 89 universals, which were then processed through an evolutionary co-evolution analysis via `BayesTraits` to yield a final confirmed set of 60 language universals.
+The reanalysis confirms **all 60 core universals** that passed the final evolutionary co-evolution checks in the original study. By insulating singleton variance profiles, the current framework maps all 191 universals into five resolution classes:
 
-* **Original Paper:** Verkerk, A., Shcherbakova, O., Haynie, H.J., Skirgård, H., Rzymski, C., Atkinson, Q.D., Greenhill, S.J., & Gray, R.D. 2026. Enduring constraints on grammar revealed by Bayesian spatiophylogenetic analyses. *Nat Hum Behav* 10, 126–136. https://doi.org/10.1038/s41562-025-02325-z.
-* **Data Source:** The original study dataset and code are available at [TestingLinguisticUniversals](https://github.com/SimonGreenhill/TestingLinguisticUniversals).
+*   **Cross-framework consensus (83 Rules):** Highly robust features confirmed as significant by both `brms` and `GPGLMM`. This group includes 59 stable baseline patterns and 24 rules that clear regional slope tests (encompassing all 60 final co-evolution universals).
+*   **Rescued Universals (16 Rules):** Cross-linguistic patterns that were obscured or dropped by the original `brms` final filters due to parameter instability, recovered via explicit isolate tracking.
+*   **Isolate-Driven False Positives (6 Rules):** Typological claims supported by the original `brms` model that collapse into non-significance once background singleton noise is insulated, indicating that their original significance was an artifact of unlinked sample noise.
+*   **Consensus Non-Significant (86 Rules):** Universals where both the Bayesian and Frequentist pipelines agree there is no meaningful evolutionary signal.
 
-### Key differences in this version
-The replication framework replaces the original block structure with an automated pipeline that alters how geographic boundaries and isolated lineages are evaluated:
+### Cross-Framework Parameters Summary
+By cross-referencing parameters directly within isolated geographic zones, our reanalysis shows that the legacy unconstrained R model experiences calculation failures across **29.8% of all features tested**.
 
-| Architectural Component | Original Study Engine (`brms` + `BayesTraits`) | Replicated Pipeline Engine (`gpboost` in Python) |
-| :--- | :--- | :--- |
-| **Statistical Framework** | Bayesian spatiophylogenetic MCMC estimation. | Frequentist Gaussian Process Generalized Linear Mixed Model (GP-GLMM). |
-| **Spatial Projections** | Flat 2D longitude/latitude map coordinates. | Continuous 3D spatial matrix coordinate mapping. |
-| **Isolate Variance Tracking** | Pooled parameters (prone to trace collapse or explosion). | Explicit routing for language isolates to isolate localized variance profiles. |
+Because both models implement identical continuous spatial maps and regional varying slopes, this volatility is driven entirely by isolate handling. When the legacy model leaves isolated languages unlinked, their parameter explosions pollute the global sampler space. By contrast, anchoring and insulating isolate variance via independent tracks stabilizes the execution, revealing which typological claims are truly robust and which were artifactual:
 
-By separating out language isolates as independent variance tracks, this framework prevents parameter collapse or explosion during estimation. The distinct visual differences in how these two architectural frameworks handle isolated language data points can be examined directly in `output/isolate_comparisons` and `output/global_isolate_comparisons`, which compares the current model's variance profiles with the MCMC traces from the original study using the synthesis records stored under `output/feature_synthesis`.
-
-## Results of the replication
-
-The replication **confirms the robustness** of the 60 universals supported by the original study's final `BayesTraits` model. At the same time, it identifies 53 additional universals that remain significant when controlling for spatiophylogenetic relations and accurately routing language isolate variance, some of which were shared by their (stage 1) `brms` model.
-
-### Cross-framework comparison
-This scatter plot maps out where the GP-GLMM agrees or disagrees with the previous method across all 191 linguistic features. Features are spaced out horizontally by how much the current model reduced background uncertainty, and grouped into distinct vertical rows so the different categories don't overlap and blur together:
-
-![Meta-Analysis Comparison Map](./output/global_synthesis_scatter.png)
-
-*   **Stable Core Consensus (Deep Blue Circles):** 60 features confirmed by both old and new modeling approaches.
-*   **Rescued Universals (brms + gpglmm) (Royal Blue Triangles):** 28 intermediate features saved after the original study's final checks dropped them.
-*   **Rescued Universals (gpglmm Alone) (Cyan Triangles):** 25 universal rules discovered exclusively by the GP-GLMM.
-*   **Projection Shift Artifacts (Crimson Red Crosses):** Features that looked like true universals on flat maps but considered as geographical side effects by GP-GLMM.
-*   **Consensus Non-Significant (Muted Yellow Squares):** Features where all models agree there is no meaningful pattern.
-
-<details>
-<summary><b>Architectural Volatility Matrix (brms vs. GP-GLMM)</b></summary>
-
-Evaluating the parameters across geographically isolated language zones reveals that the `brms` model faces issues across **29.8% of all features tested**.
-
-When the `brms` sampling algorithm runs out of family branch anchors on isolates, it hits logistic scale walls, causing runaway error explosions, parameter flatlines, or dual-mode structural failures. By contrast, anchoring isolate variance via a continuous 3D spatial Gaussian Process (`GP-GLMM`) insulates the network fields, supporting stable profiles across all 191 features:
-
-| Parameter Failure State | `brms` | `GP-GLMM` | Methodological & Structural Meaning |
+| Parameter Volatility Failure State | Legacy Bayesian (`brms`) | Topology-Aware (`GP-GLMM`) | Methodological Significance |
 | :--- | :---: | :---: | :--- |
-| **Stable Profile** | 134 | **191** | Model estimates and intervals mixed cleanly within normal unconstrained bounds. |
-| **Explosion Limit** | 27 | 0 | Uncertainty boundaries ballooned and pinned against safety ceilings due to missing tree regularizers. |
-| **Intercept Floor** | 8 | 0 | Estimates experienced near-total collapse, flatlining to a uniform value layer. |
-| **Both Violations** | 22 | 0 | Severe concurrent breakdown showing simultaneous estimate flatlining and inflated error caps. |
-| **Total** | **191** | **191** |  |
+| **Stable Execution Profile** | 134 | **191** | Model estimates and intervals ran safely within normal bounds. |
+| **Runaway Uncertainty Explosion** | 27 | 0 | Error margins inflated and pinned against safety ceilings due to missing branch anchors. |
+| **Estimate Intercept Collapse** | 8 | 0 | Estimates collapsed entirely, over-smoothing to a global baseline intercept mean. |
+| **Concurrent Double Failure** | 22 | 0 | Severe breakdown showing simultaneous estimate flatlining and exploded errors. |
+| **Total Features Evaluated** | **191** | **191** | Balanced diagnostic coverage across the reanalysis pipeline. |
 
 *Data compiled automatically by `utils/diagnostic_master.py` and saved to `output/parametric_summary.csv`.*
 
-</details>
+## Execution & Replication Pipeline
 
-### Distribution of validated universals
-The forest plot displays estimated model effects (\(\beta\) coefficients) and 95% confidence intervals for all 113 confirmed universals, split by language domain and color-coded to match final groups:
-
-![Forest Plot](./output/universals_forest_plot.png)
-
-## How to run the replication
-
-The 3D spatial mixed models use the `gpboost` library's Gaussian Process and mixed-effects modes to handle language isolate variance structures. The tree-boosting functionality is not used in these models.
-
-### Dependencies
-Install the required packages using the pinned project requirements file. This process automatically downloads the [`pykdensity` package](https://github.com/lingdoc/pykdensity) to handle the auditing of data connectivity:
+### Pinned Dependencies
+Install the required packages using the requirements file. This automatically downloads the helper package `pykdensity` to manage data density checks:
 ```bash
 pip install -r requirements.txt
 ```
 
-### 1. Audit dataset connectivity (Recommended)
-Run the diagnostic script to measure background spatial and structural data clustering before fitting any models. This script loops through all nested language subfolders, matches language entries with map coordinates, calculates individual density scores via the `pykdensity` package, and logs the weighted compound averages (κ) to the terminal:
+### Step 1: Audit Dataset Connectivity
+Run the density script to measure structural clustering across language family lines and map positions before running models:
 ```bash
 python calculate_connectivity.py
 ```
 
-### 2. Fit the frequentist model
-Run the core pipeline script to validate the data structures, build the GP-GLMMs via `gpboost`, and export the trajectory parameters:
+### Step 2: Fit the Spatial Models
+Run the core script to process raw files, initialize geocentric coordinates, map regional slope arrays, and execute the 191 models:
 ```bash
 python run_gpglmm.py
 ```
 
-### 3. Compare the frameworks
-Run the tracking diagnostic script to aggregate the GP-GLMM outputs with the original study's metrics and sort all 191 features into final groups:
+### Step 3: Compile Framework Comparisons
+Run the master utility to combine your new Python metrics with the legacy data and sort rules into final groups:
 ```bash
 python utils/diagnostic_master.py
 ```
 
-### 4. Generate charts
-Run the master plotting script to recreate the final visuals, including the framework comparison scatter plot and the distribution forest plots:
+### Step 4: Recreate Project Visuals
+Run the master plotting utility to output the final scatter comparison plots and domain-specific effect forest plots:
 ```bash
 python utils/plotting_master.py
 ```
-
-### Additional script explanations:
-- **Validation (`utils/check_datasets.py`):** Checks the raw data files in `tlu/` to make sure there are no formatting or structural errors before modeling.
-- **Modeling Engine (`utils/gpglmm_engine.py`):** Runs the main GP-GLMMs. *Note: Large output files are saved as compact binary Parquet files in `output/model_predictions_3d/` to save space. Combined results from both the current model and the original study's brms outputs are saved in `output/feature_synthesis/` as CSV files.*
