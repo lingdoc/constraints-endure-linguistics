@@ -89,25 +89,25 @@ Install the required packages using the requirements file. This automatically do
 pip install -r requirements.txt
 ```
 
-### Step 1: Audit Dataset Connectivity
+### Step 1: Audit dataset connectivity
 Run the density script to measure structural clustering across language family lines and map positions before running models:
 ```bash
 python calculate_connectivity.py
 ```
 
-### Step 2: Fit the Spatial Models
+### Step 2: Fit the GPGLMMs
 Run the core script to process raw files, initialize geocentric coordinates, map regional slope arrays, and execute the 191 models:
 ```bash
 python run_gpglmm.py
 ```
 
-### Step 3: Compile Framework Comparisons
+### Step 3: Compile framework comparisons
 Run the master utility to combine your new Python metrics with the legacy data and sort rules into final groups:
 ```bash
 python utils/diagnostic_master.py
 ```
 
-### Step 4: Recreate Project Visuals
+### Step 4: Recreate project visuals
 Run the master plotting utility to output the final scatter comparison plots and domain-specific effect forest plots:
 ```bash
 python utils/plotting_master.py
