@@ -394,13 +394,15 @@ def generate_proportional_quadrant_plot(master_file=None, output_dir=None):
             ax.text(0.5, 0.5, "No Significant Features", ha='center', va='center', style='italic', color='#7f7f7f')
 
     fig.text(0.5, 0.96, "Distribution of Validated Spatio-Phylogenetic Universals", fontsize=12, fontweight='bold', ha='center', va='top')
-    # symmetrical 4-tier publication legend configuration
+
+    # legend details
     legend_elements = [
         Line2D([], [], marker='o', color='w', markerfacecolor='#1f4e79', markeredgecolor='black', markersize=6, label='Cross-framework Consensus'),
         Line2D([], [], marker='o', color='w', markerfacecolor='#0070c0', markeredgecolor='black', markersize=6, label='Late-Stage Rescued (Passed Stage 1 Only)'),
         Line2D([], [], marker='o', color='w', markerfacecolor='#00b0f0', markeredgecolor='black', markersize=6, label='Early-Stage Rescued (GPGLMM Discovery)'),
-        # Line2D([], [], marker='o', color='w', markerfacecolor='#7f7f7f', markeredgecolor='black', markersize=6, label='Spatial Contact Noise')
+        # Line2D([], [], marker='X', color='w', markerfacecolor='#d62728', markeredgecolor='black', markersize=6, label='Isolate-Driven False Positives')
     ]
+
     fig.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, 0.946), ncol=2, frameon=False, fontsize=8)
     fig.text(0.49, 0.03, "Estimated Fixed-Effect Slope Parameter (Beta Coefficient)", fontsize=9, fontweight='bold', ha='center', va='bottom')
 
@@ -484,7 +486,8 @@ def generate_global_summary_scatter_plot(master_summary_path=None):
                 marker_type = "^"
                 delta_z_score = np.random.uniform(4.0, 5.8)
             elif "Legacy False Positive" in framework_class:
-                group_assignment = "Projection Shift Artifacts"
+                # CORRECTED SCHEMATIC LABEL TO MATCH DATA REFACTORING
+                group_assignment = "Isolate-Driven False Positives"
                 color_code = "#d62728"
                 marker_type = "X"
                 delta_z_score = np.random.uniform(2.1, 3.5)
@@ -513,20 +516,20 @@ def generate_global_summary_scatter_plot(master_summary_path=None):
                    c=first_row["Color"], marker=first_row["Marker"], s=85, alpha=0.85,
                    edgecolors="none", label=group_name)
 
-    # ax.axhline(y=1.956, color="darkred", linestyle=":", alpha=0.6, linewidth=1.5, label="Significance Threshold (|z| = 1.96)") # used when plotting actual y values
     ax.axvline(x=0, color="gray", linestyle="-", alpha=0.3, linewidth=1.0)
 
     ax.set_title("Meta-Analysis Comparison Map Across 191 Linguistic Features", fontsize=13, fontweight="bold", pad=12)
     ax.set_xlabel("Uncertainty Reduction Metrics (\u03c3_Legacy - \u03c3_3D_GP-GLMM)", fontsize=11, fontweight="bold")
-    ax.set_ylabel("Linguistic Feature Distribution Cohorts", fontsize=11, fontweight="bold") # switch to display mode
+    ax.set_ylabel("Linguistic Feature Distribution Cohorts", fontsize=11, fontweight="bold")
     ax.set_yticks([])
 
     ax.set_xlim(-4.5, 6.5)
     ax.set_ylim(-0.5, 6.2)
 
+    # CORRECTED TEXT ANNOTATION BOX FOR MAPPED ISOLATES OVERLAY
     ax.text(
         4.8, 4.5,
-        "Quadrant II:\nRescued Invariants\n(Variance Stabilized)",
+        "Quadrant II:\nRescued Invariants\n(Isolate Variance Stabilised)",
         fontsize=10,
         color="darkblue",
         weight="bold",

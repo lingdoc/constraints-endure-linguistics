@@ -15,8 +15,8 @@ def generate_3d_comparison_master():
 
     verkerk_file = os.path.join(base_dir, "tlu", "BT_results_summary.txt")
     run_3d_summary = os.path.join(base_dir, "output", "GPGLMM_results_191_100tree-3d-group.xlsx")
-    synthesis_dir = os.path.join(base_dir, "output", "feature_synthesis_macro")
-    output_master = os.path.join(base_dir, "output", "Results_3D_Master_Synthesis-macro.xlsx")
+    synthesis_dir = os.path.join(base_dir, "output", "feature_synthesis")
+    output_master = os.path.join(base_dir, "output", "Results_3D_Master_Synthesis.xlsx")
 
     missing = [f for f in [verkerk_file, run_3d_summary] if not os.path.exists(f)]
     if missing:
@@ -137,13 +137,6 @@ def generate_3d_comparison_master():
         'Framework_Resolution_Class'
     ] = "Rescued Universal (Signal Recovered by GP-GLMM Only)"
 
-    # # Group 4: Coordinate Sensitivity Artifacts (Significant only in 2D Space fields)
-    # df_master.loc[
-    #     (df_master['GPGLMM_3D_IsSig'] == 'NO') &
-    #     (df_master['GPGLMM_2D_IsSig'] == 'YES'),
-    #     'Framework_Resolution_Class'
-    # ] = "Coordinate Sensitivity Artifacts"
-
     # Group 5: Thrown Out by GP-GLMM Alone (Passed brms but explicitly Rejected by GP-GLMM)
     df_master.loc[
         (df_master['GPGLMM_3D_IsSig'] == 'NO') &
@@ -177,6 +170,7 @@ def generate_3d_comparison_master():
     print("------------------------------------------------------------------")
     print(f" Summary master file exported to: {output_master}\n")
 
+
 def generate_supplementary_master_table():
     print("Building structured supplemental table indices...")
 
@@ -190,14 +184,16 @@ def generate_supplementary_master_table():
         return
 
     metadata_map = {}
+    class_map = {}
     if os.path.exists(master_summary_path):
         try:
             df_m = pd.read_excel(master_summary_path)
-            metadata_map = dict(zip(
-                df_m['Feature_ID'].astype(str).str.strip().str.lower(),
-                df_m['PU_Short'].astype(str).str.strip()
-            ))
-        except Exception:
+            df_m['Feature_ID'] = df_m['Feature_ID'].astype(str).str.strip().str.lower()
+
+            metadata_map = dict(zip(df_m['Feature_ID'], df_m['PU_Short'].astype(str).str.strip()))
+            class_map = dict(zip(df_m['Feature_ID'], df_m['Framework_Resolution_Class'].astype(str).str.strip()))
+        except Exception as err:
+            print(f"Warning: Master summary mapping failed to process: {err}")
             pass
 
     global_records = []
@@ -215,18 +211,20 @@ def generate_supplementary_master_table():
         gp_se = df_iso['GPGLMM_3D_SE'].mean()
         variance_reduction_pct = ((vk_se - gp_se) / (vk_se if vk_se > 0 else 1.0)) * 100.0
 
-        group_assignment = "Consensus Non-Significant"
-        is_sig = "Non-Significant"
+        actual_class = class_map.get(feat_lower, "Consensus Non-Significant")
 
-        if len(global_records) < 60:
-            group_assignment = "Stable Core Consensus"
+        if "Stable Core Framework Consensus" in actual_class or "Confirmed by brms and GP-GLMM" in actual_class:
+            group_assignment = "Cross-Framework Consensus"
             is_sig = "Significant (Both)"
-        elif len(global_records) < 113:
+        elif "Signal Recovered by GP-GLMM Only" in actual_class:
             group_assignment = "Rescued Universals (3D Bounded)"
             is_sig = "Significant (3D Only)"
-        # elif len(global_records) < 119:
-        #     group_assignment = "Polar Distortion Artifacts"
-        #     is_sig = "Significant (2D Only)"
+        elif "Legacy False Positive" in actual_class:
+            group_assignment = "Isolate-Driven False Positives"
+            is_sig = "Non-Significant"
+        else:
+            group_assignment = "Consensus Non-Significant"
+            is_sig = "Non-Significant"
 
         global_records.append({
             "Feature_ID": feat_id,
@@ -244,6 +242,7 @@ def generate_supplementary_master_table():
     os.makedirs(os.path.dirname(output_xlsx), exist_ok=True)
     df_supplementary.to_excel(output_xlsx, index=False, sheet_name="Table S1 - Global Features")
     print(f"Supplementary table successfully written to: '{output_xlsx}'")
+
 
 def check_model_differences():
     """
@@ -372,6 +371,7 @@ def check_model_differences():
     print(f" Intercept Floor | {brms_counts['collapse']:<17} | {gpglmm_counts['collapse']:<19}")
     print(f" Both Violations | {brms_counts['both']:<17} | {gpglmm_counts['both']:<19}")
     print("="*50 + "\n")
+
 
 if __name__ == "__main__":
     generate_3d_comparison_master()
