@@ -52,12 +52,12 @@ This replication pipeline introduces an alternative **Topology-Aware Generalized
 
 The reanalysis confirms **all 60 core universals** that passed the final evolutionary co-evolution checks in the original study (via `BayesTraits`). By insulating singleton variance profiles, the current framework maps all 191 universals into four resolution classes:
 
-*   **Cross-framework consensus (83 Rules):** Highly robust features confirmed as significant by both `brms` and `GPGLMM`. This group encompasses all 60 final co-evolution universals, and is split into 2 subcategories:
+*   **Cross-framework consensus (83 universals):** Highly robust features confirmed as significant by both `brms` and `GPGLMM`. This group encompasses all 60 final co-evolution universals, and is split into 2 subcategories:
       1. 60 stable baseline patterns (*Stable Core Consensus*).
       2. 23 rules that clear regional slope tests (*Cross-framework Consensus (brms + GP-GLMM)*).
-*   **Rescued Universals (16 Rules):** Cross-linguistic patterns that were obscured or dropped by the original `brms` final filters due to parameter instability, recovered via explicit isolate tracking (*Rescued Universals (GP-GLMM Alone)*).
-*   **Isolate-Driven False Positives (6 Rules):** Typological claims supported by the original `brms` model that collapse into non-significance once background singleton noise is insulated, indicating that their original significance was an artifact of unlinked sample noise (*Legacy False Positive*).
-*   **Consensus Non-Significant (86 Rules):** Universals where both the Bayesian and Frequentist pipelines agree there is no meaningful evolutionary signal.
+*   **Rescued Universals (16 universals):** Cross-linguistic patterns that were obscured or dropped by the original `brms` final filters due to parameter instability, recovered via explicit isolate tracking (*Rescued Universals (GP-GLMM Alone)*).
+*   **Isolate-Driven False Positives (6 universals):** Typological claims supported by the original `brms` model that collapse into non-significance once background singleton noise is insulated, indicating that their original significance was an artifact of unlinked sample noise (*Legacy False Positive*).
+*   **Consensus Non-Significant (86 universals):** Universals where both the Bayesian and Frequentist pipelines agree there is no meaningful evolutionary signal.
 
 ![Meta-Analysis Comparison Map](./output/global_synthesis_scatter.png)
 
