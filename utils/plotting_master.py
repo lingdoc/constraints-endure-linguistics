@@ -13,7 +13,7 @@ from scipy import stats
 
 # dynamic path routing
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-master_summary_default = os.path.join(base_dir, "output", "Results_3D_Master_Synthesis-macro.xlsx")
+master_summary_default = os.path.join(base_dir, "output", "master_synthesis.xlsx")
 
 def generate_empirical_stacked_contrast(feature_id="0582KA", master_summary_path=None):
     """
