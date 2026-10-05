@@ -37,7 +37,7 @@ This replication pipeline introduces an alternative **Topology-Aware Generalized
 │   ├── [u_code]/pruned_tree.trees.gz    # family tree branch files for given universal
 │   ├── BT_results_summary.txt           # universal codes and original study results (bmrs > brms)
 │   └── Glottolog_Languages.csv          # language metadata from Glottolog
-├── utils/                             # utility scripts and processing pipelines
+├── utils/                             # utility and processing scripts
 │   ├── check_datasets.py                # data integrity validation check
 │   ├── diagnostic_master.py             # script that sorts rules into matching groups
 │   ├── gpglmm_engine.py                 # core Python modeling script
