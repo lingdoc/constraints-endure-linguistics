@@ -53,8 +53,8 @@ This replication pipeline introduces an alternative **Topology-Aware Generalized
 The reanalysis confirms **all 60 core universals** that passed the final evolutionary co-evolution checks in the original study (via `BayesTraits`). By insulating singleton variance profiles, the current framework maps all 191 universals into five resolution classes:
 
 *   **Cross-framework consensus (83):** Highly robust features confirmed as significant by both `brms` and `GPGLMM`. This group encompasses all 60 final co-evolution universals, and is split into 2 subcategories:
-      1. 59 stable baseline patterns (*Stable Core Consensus*).
-      2. 24 rules that clear regional slope tests (*Rescued universals (brms+GPGLMM)*).
+      1. 60 stable baseline patterns (*Stable Core Consensus*).
+      2. 23 rules that clear regional slope tests (*Rescued universals (brms+GPGLMM)*).
 *   **Rescued universals (16):** Cross-linguistic patterns that were obscured or dropped by the original `brms` final filters due to parameter instability, recovered via explicit isolate tracking (*Rescued universals (GPGLMM Alone)*).
 *   **Isolate-driven false positives (6):** Typological claims supported by the original `brms` model that collapse into non-significance once background singleton noise is insulated, indicating that their original significance was an artifact of unlinked sample noise.
 *   **Consensus non-significant (86):** Universals where both the Bayesian and Frequentist pipelines agree there is no meaningful evolutionary signal.
