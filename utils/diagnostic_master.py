@@ -14,9 +14,9 @@ def generate_3d_comparison_master():
     print("Compiling cross-framework master data comparisons...")
 
     verkerk_file = os.path.join(base_dir, "tlu", "BT_results_summary.txt")
-    run_3d_summary = os.path.join(base_dir, "output", "GPGLMM_results_191_100tree-3d-group.xlsx")
+    run_3d_summary = os.path.join(base_dir, "output", "gpglmm_raw_results.xlsx")
     synthesis_dir = os.path.join(base_dir, "output", "feature_synthesis")
-    output_master = os.path.join(base_dir, "output", "Results_3D_Master_Synthesis.xlsx")
+    output_master = os.path.join(base_dir, "output", "master_synthesis.xlsx")
 
     missing = [f for f in [verkerk_file, run_3d_summary] if not os.path.exists(f)]
     if missing:
@@ -175,8 +175,8 @@ def generate_supplementary_master_table():
     print("Building structured supplemental table indices...")
 
     synthesis_dir = os.path.join(base_dir, "output", "feature_synthesis")
-    master_summary_path = os.path.join(base_dir, "output", "Results_3D_Master_Synthesis.xlsx")
-    output_xlsx = os.path.join(base_dir, "output", "Supplementary_Table_S1_Global_Synthesis.xlsx")
+    master_summary_path = os.path.join(base_dir, "output", "master_synthesis.xlsx")
+    output_xlsx = os.path.join(base_dir, "output", "supplementary_table_s1.xlsx")
 
     feature_files = glob.glob(os.path.join(synthesis_dir, "universal_*.csv"))
     if not feature_files:

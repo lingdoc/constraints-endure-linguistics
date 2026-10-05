@@ -75,7 +75,7 @@ def save_checkpoint(xdict, output_excel):
     os.replace(temp_excel, output_excel)
 
 if __name__ == "__main__":
-    output_excel = "output/GPGLMM_results_191_100tree-3d-group.xlsx"
+    output_excel = "output/gpglmm_raw_results.xlsx"
     predictions_folder = "output/model_predictions"
     os.makedirs("output", exist_ok=True)
 

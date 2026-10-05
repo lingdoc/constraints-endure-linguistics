@@ -15,7 +15,7 @@ from pykdensity import calculate_densities
 
 # project setup
 data_dir = "tlu"
-output_csv = os.path.join("output", "linguistics_connectivity_summary.csv")
+output_csv = os.path.join("output", "connectivity_summary.csv")
 os.makedirs("output", exist_ok=True)
 
 print("\nStarting data connectivity analysis")
