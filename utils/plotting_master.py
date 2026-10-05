@@ -37,7 +37,7 @@ def generate_empirical_stacked_contrast(feature_id="0582KA", master_summary_path
     df = pd.read_csv(synthesis_path)
     df_isolates = df[df['Isolate_Flag'] == 1].copy()
 
-    # Fallback to avoid empty plots if a specific feature contains zero sparse taxa
+    # fallback to avoid empty plots if a specific feature contains zero sparse taxa
     if df_isolates.empty:
         df_isolates = df.sample(min(40, len(df)))
 
@@ -249,21 +249,21 @@ def generate_supplementary_tables(master_file=None, output_dir=None):
     BETA_COL = 'GPGLMM_3D_Beta'
     TAX_COL = 'Framework_Resolution_Class'
 
-    # Extract consensus cohort (Table A)
+    # extract consensus cohort (Table A)
     target_a = "Stable Core Framework Consensus (Passed Co-evolution & GP-GLMM)"
     df_a = df[df[TAX_COL] == target_a].copy()
     df_a['Support_Source'] = "Both"
     table_a = df_a[[CODE_COL, SHORT_NAME_COL, DEF_COL, BETA_COL, 'Support_Source']].copy()
     table_a.columns = ['Code', 'Short_Name', 'Definition', 'GPGLMM_Beta', 'Support_Source']
 
-    # Extract spatial expansion track (Table B)
+    # extract spatial expansion track (Table B)
     target_b = "Rescued Universal (Signal Recovered by GP-GLMM Only)"
     df_b = df[df[TAX_COL] == target_b].copy()
     df_b['Support_Source'] = "GPGLMM"
     table_b = df_b[[CODE_COL, SHORT_NAME_COL, DEF_COL, BETA_COL, 'Support_Source']].copy()
     table_b.columns = ['Code', 'Short_Name', 'Definition', 'GPGLMM_Beta', 'Support_Source']
 
-    # Evaluate directional sign distributions on confirmed discoveries
+    # evaluate directional sign distributions on confirmed discoveries
     df_sig_3d = df[df['GPGLMM_3D_IsSig'] == 'YES'].copy()
     total_n = len(df_sig_3d)
     successes = (df_sig_3d[BETA_COL] > 0).sum()
@@ -280,8 +280,8 @@ def generate_supplementary_tables(master_file=None, output_dir=None):
     print("------------------------------------------------------------------")
 
     os.makedirs(output_dir, exist_ok=True)
-    path_a = os.path.join(output_dir, "Table_A_Consensus.xlsx")
-    path_b = os.path.join(output_dir, "Table_B_Expansion.xlsx")
+    path_a = os.path.join(output_dir, "table_a_consensus.xlsx")
+    path_b = os.path.join(output_dir, "table_b_expansion.xlsx")
 
     table_a.to_excel(path_a, index=False)
     table_b.to_excel(path_b, index=False)
@@ -476,7 +476,7 @@ def generate_global_summary_scatter_plot(master_summary_path=None):
                 marker_type = "o"
                 delta_z_score = np.random.uniform(0.1, 1.8)
             elif "Confirmed by brms and GP-GLMM" in framework_class:
-                group_assignment = "Rescued Universals (brms + GPGLMM)"
+                group_assignment = "Cross-framework Consensus (brms + GPGLMM)"
                 color_code = "#1f77b4"
                 marker_type = "^"
                 delta_z_score = np.random.uniform(2.1, 3.8)
@@ -486,7 +486,6 @@ def generate_global_summary_scatter_plot(master_summary_path=None):
                 marker_type = "^"
                 delta_z_score = np.random.uniform(4.0, 5.8)
             elif "Legacy False Positive" in framework_class:
-                # CORRECTED SCHEMATIC LABEL TO MATCH DATA REFACTORING
                 group_assignment = "Isolate-Driven False Positives"
                 color_code = "#d62728"
                 marker_type = "X"
@@ -526,10 +525,9 @@ def generate_global_summary_scatter_plot(master_summary_path=None):
     ax.set_xlim(-4.5, 6.5)
     ax.set_ylim(-0.5, 6.2)
 
-    # CORRECTED TEXT ANNOTATION BOX FOR MAPPED ISOLATES OVERLAY
     ax.text(
         4.8, 4.5,
-        "Quadrant II:\nRescued Invariants\n(Isolate Variance Stabilised)",
+        "Quadrant II:\nRescued universals\n(Isolate Variance Stabilised)",
         fontsize=10,
         color="darkblue",
         weight="bold",

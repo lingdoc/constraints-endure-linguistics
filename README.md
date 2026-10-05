@@ -21,15 +21,15 @@ This replication pipeline introduces an alternative **Topology-Aware Generalized
 │   ├── isolate_comparisons/             # volatility charts for isolated languages
 │   ├── model_predictions/               # GPGLMM results (regional random slopes)
 │   │
-│   ├── connectivity_summary.csv         # results of density (κ) assessment
+│   ├── connectivity_summary.csv         # results of density (𝜅) assessment
 │   ├── global_synthesis_scatter.png     # comparison scatter plot for all 191 universals
 │   ├── gpglmm_raw_results.xlsx          # output from GPGLMM
 │   ├── master_synthesis.xlsx            # main spreadsheet with final groupings
 │   ├── parametric_summary.csv           # results of parameter instability check
 │   ├── sensitivity_matrix.csv           # results of spatial sensitivity test
 │   ├── supplementary_table_s1.xlsx      # full parameter database (brms+GPGLMM)
-│   ├── Table_A_Consensus.xlsx           # table of universals agreed by all models
-│   ├── Table_B_Expansion.xlsx           # table of universals found by GPGLMM only
+│   ├── table_a_consensus.xlsx           # table of universals agreed by all models
+│   ├── table_b_expansion.xlsx           # table of universals found by GPGLMM only
 │   ├── universals_forest_plot.pdf       # forest plot chart (PDF format)
 │   └── universals_forest_plot.png       # forest plot chart (PNG graphic)
 ├── tlu/                               # raw data and tree files from original study
@@ -42,7 +42,7 @@ This replication pipeline introduces an alternative **Topology-Aware Generalized
 │   ├── diagnostic_master.py             # script that sorts rules into matching groups
 │   ├── gpglmm_engine.py                 # core Python modeling script
 │   └── plotting_master.py               # chart and graphic generation scripts
-├── calculate_connectivity.py          # measures data density (κ)
+├── calculate_connectivity.py          # measures data density (𝜅)
 ├── README.md                          # project documentation
 ├── requirements.txt                   # pinned package dependencies
 └── run_gpglmm.py                      # main script to fit models
@@ -50,21 +50,21 @@ This replication pipeline introduces an alternative **Topology-Aware Generalized
 
 ## Replication Summary Metrics
 
-The reanalysis confirms **all 60 core universals** that passed the final evolutionary co-evolution checks in the original study (via `BayesTraits`). By insulating singleton variance profiles, the current framework maps all 191 universals into five resolution classes:
+The reanalysis confirms **all 60 core universals** that passed the final evolutionary co-evolution checks in the original study (via `BayesTraits`). By insulating singleton variance profiles, the current framework maps all 191 universals into four resolution classes:
 
-*   **Cross-framework consensus (83):** Highly robust features confirmed as significant by both `brms` and `GPGLMM`. This group encompasses all 60 final co-evolution universals, and is split into 2 subcategories:
+*   **Cross-framework consensus (83 Rules):** Highly robust features confirmed as significant by both `brms` and `GPGLMM`. This group encompasses all 60 final co-evolution universals, and is split into 2 subcategories:
       1. 60 stable baseline patterns (*Stable Core Consensus*).
-      2. 23 rules that clear regional slope tests (*Rescued universals (brms+GPGLMM)*).
-*   **Rescued universals (16):** Cross-linguistic patterns that were obscured or dropped by the original `brms` final filters due to parameter instability, recovered via explicit isolate tracking (*Rescued universals (GPGLMM Alone)*).
-*   **Isolate-driven false positives (6):** Typological claims supported by the original `brms` model that collapse into non-significance once background singleton noise is insulated, indicating that their original significance was an artifact of unlinked sample noise.
-*   **Consensus non-significant (86):** Universals where both the Bayesian and Frequentist pipelines agree there is no meaningful evolutionary signal.
+      2. 23 rules that clear regional slope tests (*Cross-framework Consensus (brms + GP-GLMM)*).
+*   **Rescued Universals (16 Rules):** Cross-linguistic patterns that were obscured or dropped by the original `brms` final filters due to parameter instability, recovered via explicit isolate tracking (*Rescued Universals (GP-GLMM Alone)*).
+*   **Isolate-Driven False Positives (6 Rules):** Typological claims supported by the original `brms` model that collapse into non-significance once background singleton noise is insulated, indicating that their original significance was an artifact of unlinked sample noise (*Legacy False Positive*).
+*   **Consensus Non-Significant (86 Rules):** Universals where both the Bayesian and Frequentist pipelines agree there is no meaningful evolutionary signal.
 
 ![Meta-Analysis Comparison Map](./output/global_synthesis_scatter.png)
 
-### Cross-framework parameters summary
+### Cross-Framework Parameters Summary
 By cross-referencing parameters, reanalysis shows that the legacy R model experiences calculation failures across **29.8% of all features tested**.
 
-Because both models implement near-identical spatial maps and regional varying slopes, this volatility seems to be driven entirely by isolate handling. When the `brms` model leaves these languages unlinked, their parameter explosions impact the global sampler space. By contrast, anchoring and insulating isolate variance via independent tracks stabilizes the estimates, allowing the model to distinguish between robust and artifactual universals:
+Because both models implement near-identical spatial maps and regional varying slopes, this volatility is driven entirely by isolate handling. When the `brms` model leaves these languages unlinked, their parameter explosions impact the global sampler space. By contrast, anchoring and insulating isolate variance via independent tracks stabilizes the estimates, allowing the model to distinguish between robust and artifactual universals:
 
 | Parameter Volatility Failure State | Bayesian (`brms`) | Frequentist (`GP-GLMM`) | Methodological Significance |
 | :--- | :---: | :---: | :--- |
@@ -72,12 +72,12 @@ Because both models implement near-identical spatial maps and regional varying s
 | **Uncertainty Explosion** | 27 | 0 | Error margins inflated and pinned against safety ceilings due to missing branch anchors. |
 | **Estimate Collapse** | 8 | 0 | Estimates collapsed entirely, over-smoothing to a global baseline intercept mean. |
 | **Double Failure** | 22 | 0 | Severe breakdown showing simultaneous estimate flatlining and exploded errors. |
-| **Total Features Evaluated** | **191** | **191** |  |
+| **Total Features Evaluated** | **191** | **191** | Balanced structural coverage across the pipeline loop. |
 
 *Data compiled automatically by `utils/diagnostic_master.py` and saved to `output/parametric_summary.csv`.*
 
 ### Distribution of validated universals
-The forest plot displays estimated model effects (\(\beta\) coefficients) and 95% confidence intervals for all 99 confirmed universals, split by language domain and color-coded to match final groups:
+The forest plot displays estimated model effects (β coefficients) and 95% confidence intervals for all 99 confirmed significant universals, split by language domain and color-coded to match final groups:
 
 ![Forest Plot](./output/universals_forest_plot.png)
 
@@ -90,7 +90,7 @@ pip install -r requirements.txt
 ```
 
 ### Step 1: Audit dataset connectivity
-Run the density script to measure structural clustering across language family lines and map positions before running models:
+Run the density script to measure structural clustering across space and time before running models:
 ```bash
 python calculate_connectivity.py
 ```
