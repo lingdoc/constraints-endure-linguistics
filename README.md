@@ -4,7 +4,7 @@ This repository contains the replication pipeline and diagnostic code used to an
 
 ## The Core Problem: Isolate Variance Traps
 
-The original study utilized a Bayesian spatiophylogenetic mixed model (`brms` in R) across 100 posterior phylogenetic trees to evaluate support for 191 binary grammatical universals. However, on highly fragmented typological networks—where structural density drops below a critical floor (\(\kappa_{\text{structural}} \le 0.10\))—the ancestral trees shatter into disconnected family islands.
+The original study utilized a Bayesian spatiophylogenetic mixed model (`brms` in R) across 100 posterior phylogenetic trees to evaluate support for 191 binary grammatical universals. However, on highly fragmented typological networks—where structural density drops below a critical floor (𝜅_structural ≤ 0.10)—the ancestral trees shatter into disconnected family islands.
 
 When a multi-level sampling algorithm encounters these historical isolates (single language families with no close tree relatives), the parameter space faces severe numerical stress:
 * **Parameter Collapse:** Unanchored localized signals are over-smoothed and flatline toward global intercept means.
@@ -28,7 +28,8 @@ This replication pipeline introduces an alternative **Topology-Aware Generalized
 │   ├── parametric_summary.csv                       # results of parameter instability check
 │   ├── Results_3D_Master_Synthesis.xlsx             # main spreadsheet sorting rules into final groups
 │   ├── Supplementary_Table_S1_Global_Synthesis.xlsx # full parameter database (brms+GPGLMM)
-│   ├── parametric_summary.csv                       # summary of data crashes on isolates
+│   ├── Table_A_Consensus.xlsx                       # table of universals agreed by all models
+│   ├── Table_B_Expansion.xlsx                       # table of universals found by GPGLMM only
 │   ├── universals_forest_plot.pdf                   # forest plot chart (PDF format)
 │   └── universals_forest_plot.png                   # forest plot chart (PNG graphic)
 ├── tlu/                                # raw data and tree files from original study
@@ -63,11 +64,11 @@ Because both models implement identical continuous spatial maps and regional var
 
 | Parameter Volatility Failure State | Legacy Bayesian (`brms`) | Topology-Aware (`GP-GLMM`) | Methodological Significance |
 | :--- | :---: | :---: | :--- |
-| **Stable Execution Profile** | 134 | **191** | Model estimates and intervals ran safely within normal bounds. |
+| **Stable Execution Profile** | 134 | **191** | Model estimates and intervals ran within normal bounds. |
 | **Runaway Uncertainty Explosion** | 27 | 0 | Error margins inflated and pinned against safety ceilings due to missing branch anchors. |
 | **Estimate Intercept Collapse** | 8 | 0 | Estimates collapsed entirely, over-smoothing to a global baseline intercept mean. |
 | **Concurrent Double Failure** | 22 | 0 | Severe breakdown showing simultaneous estimate flatlining and exploded errors. |
-| **Total Features Evaluated** | **191** | **191** | Balanced diagnostic coverage across the reanalysis pipeline. |
+| **Total Features Evaluated** | **191** | **191** |  |
 
 *Data compiled automatically by `utils/diagnostic_master.py` and saved to `output/parametric_summary.csv`.*
 
