@@ -1,30 +1,30 @@
 # Constraints that Endure: Assessing Model Robustness in Linguistic Typology
 
-This repository contains the replication pipeline and diagnostic code used to analyze model robustness and isolate parameter volatility within global typological databases, using the cross-linguistic universals framework from Verkerk et al. (2026).
+This repository contains the replication scripts and code used to analyze model robustness and isolate parameter volatility within global typological databases, using the cross-linguistic universals framework from Verkerk et al. (2026).
 
 ## The Core Problem: Isolate Variance Traps
 
 The original study utilized a Bayesian spatiophylogenetic mixed model (`brms` in R) across 100 posterior phylogenetic trees to evaluate support for 191 binary grammatical universals. However, where structural density drops below a critical floor (𝜅_structural ≤ 0.10), it indicates that there are a large number of disconnected families or unlinked nodes.
 
-When a multi-level sampling algorithm encounters such historical isolates (single language families with no close tree relatives), the parameter space faces numerical stress that can result in the following issues:
+When a multi-level sampling algorithm encounters such historical isolates (single language families with no close tree relatives), estimating the parameter space can result in the following issues:
 * **Parameter Collapse:** Unanchored localized signals are over-smoothed and flatline toward global intercept means.
 * **Parameter Explosion:** Runaway variance estimation triggers extreme uncertainty inflation on boundary nodes, pinning error caps against safety ceilings.
 
-This replication pipeline introduces an alternative **Topology-Aware Generalized Linear Mixed Model (GP-GLMM)** using `gpboost` in Python. While both models share a matching `bernoulli_logit` link, continuous geographic kernels (2D vs 3D), and regional random slopes, the current architecture implements a crucial data isolation layer that decouples localized variance profiles by routing historical isolates to independent variance tracks. This insulates the network fields, resolving calculation crashes and rescuing stable typological signals that were previously masked by estimation noise.
+This replication pipeline introduces an alternative **Topology-Aware Generalized Linear Mixed Model with Gaussian Process (GP-GLMM)** using `gpboost` in Python. While both models share a matching `bernoulli_logit` link, continuous geographic kernels (2D vs 3D), and regional random slopes (for macroareas), the current architecture implements a data isolation layer that routes historical isolates to independent variance tracks. This insulates the network fields, resolving calculation crashes and rescuing stable typological signals that were previously masked by estimation noise.
 
 ## Project Structure
 
 ```text
 ├── output/                            # main results and chart exports
-│   ├── feature_synthesis/             # combined dataset for each universal
-│   ├── global_isolate_comparisons/    # global mapping views (per universal)
-│   ├── isolate_comparisons/           # volatility charts for isolated languages
-│   ├── model_predictions/             # results under regional random slope models
+│   ├── feature_synthesis/               # combined datasets for each universal
+│   ├── global_isolate_comparisons/      # global mapping views (per universal)
+│   ├── isolate_comparisons/             # volatility charts for isolated languages
+│   ├── model_predictions/               # GPGLMM results (regional random slopes)
 │   │
-│   ├── connectivity_summary.csv         # density (κ) results
+│   ├── connectivity_summary.csv         # results of density (κ) assessment
 │   ├── global_synthesis_scatter.png     # comparison scatter plot for all 191 universals
 │   ├── gpglmm_raw_results.xlsx          # output from GPGLMM
-│   ├── master_synthesis.xlsx            # main spreadsheet sorting rules into final groups
+│   ├── master_synthesis.xlsx            # main spreadsheet with final groupings
 │   ├── parametric_summary.csv           # results of parameter instability check
 │   ├── sensitivity_matrix.csv           # results of spatial sensitivity test
 │   ├── supplementary_table_s1.xlsx      # full parameter database (brms+GPGLMM)
@@ -33,34 +33,38 @@ This replication pipeline introduces an alternative **Topology-Aware Generalized
 │   ├── universals_forest_plot.pdf       # forest plot chart (PDF format)
 │   └── universals_forest_plot.png       # forest plot chart (PNG graphic)
 ├── tlu/                               # raw data and tree files from original study
-│   ├── [u_code]/BT_data.txt             # coded language features from Grambank for universal
-│   ├── [u_code]/pruned_tree.trees.gz    # historical family tree branch files for universal
-│   ├── BT_results_summary.txt           # universal codes and results from original study
+│   ├── [u_code]/BT_data.txt             # coded language features from Grambank for given universal
+│   ├── [u_code]/pruned_tree.trees.gz    # family tree branch files for given universal
+│   ├── BT_results_summary.txt           # universal codes and original study results (bmrs > brms)
 │   └── Glottolog_Languages.csv          # language metadata from Glottolog
 ├── utils/                             # utility scripts and processing pipelines
 │   ├── check_datasets.py                # data integrity validation check
 │   ├── diagnostic_master.py             # script that sorts rules into matching groups
 │   ├── gpglmm_engine.py                 # core Python modeling script
 │   └── plotting_master.py               # chart and graphic generation scripts
-├── calculate_connectivity.py           # measures background data density (κ)
-├── README.md                           # project documentation
-├── requirements.txt                    # pinned package dependencies
-└── run_gpglmm.py                       # main script to fit models
+├── calculate_connectivity.py          # measures data density (κ)
+├── README.md                          # project documentation
+├── requirements.txt                   # pinned package dependencies
+└── run_gpglmm.py                      # main script to fit models
 ```
 
 ## Replication Summary Metrics
 
-The reanalysis confirms **all 60 core universals** that passed the final evolutionary co-evolution checks in the original study (via `BayesTraits`). By insulating singleton variance profiles, the current framework maps all 191 universals into four resolution classes:
+The reanalysis confirms **all 60 core universals** that passed the final evolutionary co-evolution checks in the original study (via `BayesTraits`). By insulating singleton variance profiles, the current framework maps all 191 universals into five resolution classes:
 
-*   **Cross-framework consensus (83 rules):** Highly robust features confirmed as significant by both `brms` and `GPGLMM`. This group includes 59 stable baseline patterns and 24 rules that clear regional slope tests (encompassing all 60 final co-evolution universals).
-*   **Rescued universals (16 rules):** Cross-linguistic patterns that were obscured or dropped by the original `brms` final filters due to parameter instability, recovered via explicit isolate tracking.
-*   **Isolate-driven false positives (6 rules):** Typological claims supported by the original `brms` model that collapse into non-significance once background singleton noise is insulated, indicating that their original significance was an artifact of unlinked sample noise.
-*   **Consensus non-significant (86 rules):** Universals where both the Bayesian and Frequentist pipelines agree there is no meaningful evolutionary signal.
+*   **Cross-framework consensus (83):** Highly robust features confirmed as significant by both `brms` and `GPGLMM`. This group encompasses all 60 final co-evolution universals, and is split into 2 subcategores:
+      1. 59 stable baseline patterns (*Stable Core Consensus*).
+      2. 24 rules that clear regional slope tests (*Rescued universals (brms+GPGLMM)*).
+*   **Rescued universals (16):** Cross-linguistic patterns that were obscured or dropped by the original `brms` final filters due to parameter instability, recovered via explicit isolate tracking (*Rescued universals (GPGLMM Alone)*).
+*   **Isolate-driven false positives (6):** Typological claims supported by the original `brms` model that collapse into non-significance once background singleton noise is insulated, indicating that their original significance was an artifact of unlinked sample noise.
+*   **Consensus non-significant (86):** Universals where both the Bayesian and Frequentist pipelines agree there is no meaningful evolutionary signal.
 
-### Cross-Framework Parameters Summary
-By cross-referencing parameters directly within isolated geographic zones, our reanalysis shows that the legacy unconstrained R model experiences calculation failures across **29.8% of all features tested**.
+![Meta-Analysis Comparison Map](./output/global_synthesis_scatter.png)
 
-Because both models implement identical continuous spatial maps and regional varying slopes, this volatility is driven entirely by isolate handling. When the `brms` model leaves isolated languages unlinked, their parameter explosions pollute the global sampler space. By contrast, anchoring and insulating isolate variance via independent tracks stabilizes the execution, revealing which typological claims are truly robust and which were artifactual:
+### Cross-framework parameters summary
+By cross-referencing parameters, reanalysis shows that the legacy R model experiences calculation failures across **29.8% of all features tested**.
+
+Because both models implement near-identical spatial maps and regional varying slopes, this volatility seems to be driven entirely by isolate handling. When the `brms` model leaves these languages unlinked, their parameter explosions impact the global sampler space. By contrast, anchoring and insulating isolate variance via independent tracks stabilizes the estimates, allowing the model to distinguish between robust and artifactual universals:
 
 | Parameter Volatility Failure State | Bayesian (`brms`) | Frequentist (`GP-GLMM`) | Methodological Significance |
 | :--- | :---: | :---: | :--- |
@@ -72,9 +76,14 @@ Because both models implement identical continuous spatial maps and regional var
 
 *Data compiled automatically by `utils/diagnostic_master.py` and saved to `output/parametric_summary.csv`.*
 
-## Execution & Replication Pipeline
+### Distribution of validated universals
+The forest plot displays estimated model effects (\(\beta\) coefficients) and 95% confidence intervals for all 99 confirmed universals, split by language domain and color-coded to match final groups:
 
-### Pinned Dependencies
+![Forest Plot](./output/universals_forest_plot.png)
+
+## Execution & replication
+
+### Pinned dependencies
 Install the required packages using the requirements file. This automatically downloads the helper package `pykdensity` to manage data density checks:
 ```bash
 pip install -r requirements.txt
