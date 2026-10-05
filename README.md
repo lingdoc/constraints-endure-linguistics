@@ -52,7 +52,7 @@ This replication pipeline introduces an alternative **Topology-Aware Generalized
 
 The reanalysis confirms **all 60 core universals** that passed the final evolutionary co-evolution checks in the original study (via `BayesTraits`). By insulating singleton variance profiles, the current framework maps all 191 universals into five resolution classes:
 
-*   **Cross-framework consensus (83):** Highly robust features confirmed as significant by both `brms` and `GPGLMM`. This group encompasses all 60 final co-evolution universals, and is split into 2 subcategores:
+*   **Cross-framework consensus (83):** Highly robust features confirmed as significant by both `brms` and `GPGLMM`. This group encompasses all 60 final co-evolution universals, and is split into 2 subcategories:
       1. 59 stable baseline patterns (*Stable Core Consensus*).
       2. 24 rules that clear regional slope tests (*Rescued universals (brms+GPGLMM)*).
 *   **Rescued universals (16):** Cross-linguistic patterns that were obscured or dropped by the original `brms` final filters due to parameter instability, recovered via explicit isolate tracking (*Rescued universals (GPGLMM Alone)*).
