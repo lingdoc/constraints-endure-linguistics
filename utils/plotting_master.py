@@ -1,5 +1,5 @@
 """
-utils/plotting_master.py: Visualizes cross-linguistic spatial distributions,
+utils/plotting_master.py: visualizes cross-linguistic spatial distributions,
 proportional forest plots, and comparative framework synthesis charts.
 """
 import os
@@ -17,7 +17,7 @@ master_summary_default = os.path.join(base_dir, "output", "master_synthesis.xlsx
 
 def generate_empirical_stacked_contrast(feature_id="0582KA", master_summary_path=None):
     """
-    Plots localized parameter uncertainty contrasts for isolated languages to
+    plots localized parameter uncertainty contrasts for isolated languages to
     evaluate variance reduction profiles.
     """
     if master_summary_path is None:
@@ -31,7 +31,7 @@ def generate_empirical_stacked_contrast(feature_id="0582KA", master_summary_path
         return
 
     if not os.path.exists(synthesis_path):
-        print(f"Skipping Feature {feature_id.upper()}: Synthesis file not found at '{synthesis_path}'")
+        print(f"Skipping feature {feature_id.upper()}: synthesis file not found at '{synthesis_path}'")
         return
 
     df = pd.read_csv(synthesis_path)
@@ -68,22 +68,24 @@ def generate_empirical_stacked_contrast(feature_id="0582KA", master_summary_path
                 trait_short_title = str(match_row.iloc[0].get('PU_Short', trait_short_title))
                 framework_class = str(match_row.iloc[0].get('Framework_Resolution_Class', framework_class))
         except Exception as e:
-            print(f"   Metadata extraction warning for {feature_id.upper()}: {e}")
+            print(f"Metadata extraction warning for {feature_id.upper()}: {e}")
             pass
 
     plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8.5), sharex=True)
 
-    # --- PANEL A: Legacy Multilevel Framework (brms) ---
-    ax1.errorbar(x_axis_indices, vk_means, yerr=vk_sds, fmt='o', color='#d65f5f', ecolor='#f4a4a4', elinewidth=1.5, capsize=2, label='Multilevel (brms) Intercepts')
+    # --- panel a: legacy multilevel framework (brms) ---
+    # color adjusted to high contrast dark gray/charcoal to represent legacy profile
+    ax1.errorbar(x_axis_indices, vk_means, yerr=vk_sds, fmt='o', color='#333333', ecolor='#b5b5b5', elinewidth=1.5, capsize=2, label='Multilevel (brms) Intercepts')
     ax1.set_title("Legacy Multilevel Specification (brms)", fontsize=11, fontweight='bold', pad=6)
     ax1.set_ylabel("Latent Scale (Log-Odds)", fontsize=11)
     ax1.set_ylim(ymin, ymax)
     ax1.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
     ax1.legend(loc='upper right', frameon=True, fontsize=10)
 
-    # --- PANEL B: Spatial Gaussian Process Framework (GP-GLMM) ---
-    ax2.errorbar(x_axis_indices, gp_means, yerr=gp_sds, fmt='o', color='#4876ff', ecolor='#b0c4de', elinewidth=1.5, capsize=2, label='GP-GLMM Latent Mean')
+    # --- panel b: spatial gaussian process framework (gp-glmm) ---
+    # updated to clear okabe-ito colorblind safe blue
+    ax2.errorbar(x_axis_indices, gp_means, yerr=gp_sds, fmt='o', color='#0072B2', ecolor='#9cd3f7', elinewidth=1.5, capsize=2, label='GP-GLMM Latent Mean')
     ax2.set_title("Spatial Gaussian Process Specification (GP-GLMM)", fontsize=11, fontweight='bold', pad=6)
     ax2.set_xlabel("Isolated Language Index (Sparse Taxa Rows)", fontsize=11)
     ax2.set_ylabel("Spatially Anchored Predictor Scale", fontsize=11)
@@ -104,6 +106,7 @@ def generate_empirical_stacked_contrast(feature_id="0582KA", master_summary_path
     print(f"Programmatic contrast saved successfully for feature {feature_id.upper()} -> '{output_img_path}'")
 
 def batch_plot_all_completed_features(master_summary_path=None):
+    """iterates over sheets inside data paths to launch empirical panels."""
     if master_summary_path is None:
         master_summary_path = master_summary_default
 
@@ -125,8 +128,8 @@ def batch_plot_all_completed_features(master_summary_path=None):
 
 def generate_global_empirical_contrast(feature_id="0582KA", master_summary_path=None):
     """
-    Generates a global stacked contrast plot tracking regularized family cluster
-    trends alongside geographic isolates.
+    generates a global stacked contrast plot tracking regularized family cluster
+    trends alongside geographic isolates using paired geometric symbol markers.
     """
     if master_summary_path is None:
         master_summary_path = master_summary_default
@@ -178,12 +181,13 @@ def generate_global_empirical_contrast(feature_id="0582KA", master_summary_path=
     plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 9), sharex=True)
 
-    # --- PANEL A: Legacy Multilevel Framework (brms) ---
+    # --- panel a: legacy multilevel framework (brms) ---
+    # baseline trees mapped to neutral grey circles; isolates mapped to okabe-ito vermilion triangles
     if n_branches > 0:
         ax1.errorbar(x_indices[:n_branches], vk_means[:n_branches], yerr=vk_sds[:n_branches],
                      fmt='o', color='#7f7f7f', ecolor='#d3d3d3', elinewidth=1.0, markersize=4, alpha=0.6, label='Family Trees')
     ax1.errorbar(x_indices[n_branches:], vk_means[n_branches:], yerr=vk_sds[n_branches:],
-                 fmt='^', color='#d65f5f', ecolor='#f4a4a4', elinewidth=1.8, markersize=6, capsize=2, label='Linguistic Isolates')
+                 fmt='^', color='#D55E00', ecolor='#ffccb3', elinewidth=1.8, markersize=6, capsize=2, label='Linguistic Isolates')
     ax1.set_title("Legacy Multilevel Specification (brms)", fontsize=11, fontweight='bold', pad=6)
     ax1.set_ylabel("Latent Scale (Log-Odds)", fontsize=11)
     ax1.set_ylim(ymin, ymax)
@@ -191,10 +195,11 @@ def generate_global_empirical_contrast(feature_id="0582KA", master_summary_path=
     ax1.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
     ax1.legend(loc='upper left', frameon=True, fontsize=9)
 
-    # --- PANEL B: Spatial Gaussian Process Framework (GP-GLMM) ---
+    # --- panel b: spatial gaussian process framework (gp-glmm) ---
+    # baseline trees mapped to neutral grey circles; isolates mapped to okabe-ito sky blue triangles
     if n_branches > 0:
         ax2.errorbar(x_indices[:n_branches], gp_means[:n_branches], yerr=gp_sds[:n_branches], fmt='o', color='#7f7f7f', ecolor='#d3d3d3', elinewidth=1.0, markersize=4, alpha=0.6, label='Family Trees')
-    ax2.errorbar(x_indices[n_branches:], gp_means[n_branches:], yerr=gp_sds[n_branches:], fmt='^', color='#4876ff', ecolor='#b0c4de', elinewidth=1.8, markersize=6, capsize=2, label='Linguistic Isolates')
+    ax2.errorbar(x_indices[n_branches:], gp_means[n_branches:], yerr=gp_sds[n_branches:], fmt='^', color='#0072B2', ecolor='#9cd3f7', elinewidth=1.8, markersize=6, capsize=2, label='Linguistic Isolates')
     ax2.set_title("Spatial Gaussian Process Specification (GP-GLMM)", fontsize=11, fontweight='bold', pad=6)
     ax2.set_xlabel("Language Continuity Spectrum (Genealogical Clusters \u2192 Isolated Frontiers)", fontsize=11)
     ax2.set_ylabel("Spatially Anchored Predictor Scale", fontsize=11)
@@ -220,6 +225,7 @@ def generate_global_empirical_contrast(feature_id="0582KA", master_summary_path=
     print(f"Macro-contrast view exported successfully for feature {feature_id.upper()} -> '{output_img_path}'")
 
 def batch_plot_all_global_views(master_summary_path=None):
+    """triggers full cross-class grid visualizers sequentially across arrays."""
     if master_summary_path is None:
         master_summary_path = master_summary_default
 
@@ -233,6 +239,7 @@ def batch_plot_all_global_views(master_summary_path=None):
         generate_global_empirical_contrast(feature_id=extracted_id, master_summary_path=master_summary_path)
 
 def generate_supplementary_tables(master_file=None, output_dir=None):
+    """parses primary spreadsheet indexes to export separate data tables."""
     print("Extracting supplemental sub-tables from master data matrix...")
 
     if master_file is None:
@@ -291,6 +298,7 @@ def generate_supplementary_tables(master_file=None, output_dir=None):
     return table_a, table_b
 
 def generate_proportional_quadrant_plot(master_file=None, output_dir=None):
+    """plots structural forest distribution columns matching distinct morphosyntactic fields."""
     if master_file is None:
         master_file = master_summary_default
     if output_dir is None:
@@ -346,26 +354,13 @@ def generate_proportional_quadrant_plot(master_file=None, output_dir=None):
 
         df_sub = df_sig[df_sig["Domain"] == cat].copy()
         df_sub.sort_values(by="abs_beta", ascending=True, inplace=True)
-        y_pos = range(len(df_sub))
+        y_pos = np.arange(len(df_sub))
 
-        # dynamic 4-way color cohort assignment schema
-        colors = []
-        for _, row in df_sub.iterrows():
-            is_sig_3d = str(row.get("GPGLMM_3D_IsSig", "NO")).strip().upper() == "YES"
-            passed_stage1 = str(row.get("Verkerk_BRMS_Spatial_Stage1", "NO")).strip().upper() == "YES"
-            passed_coevol = str(row.get("Verkerk_Final_CoEvol", "NO")).strip().upper() == "YES"
+        # ✅ FIXED: Initialize baseline tracking boundaries before the loop evaluates them
+        min_whisker = 0.0
+        max_whisker = 0.0
 
-            if is_sig_3d and passed_coevol:
-                colors.append('#1f4e79')      # Deep Blue: cross framework consensus
-            elif is_sig_3d and passed_stage1:
-                colors.append('#0070c0')      # Bright Blue: late-stage rescued (passed stage 1 & GPGLMM)
-            elif is_sig_3d:
-                colors.append('#00b0f0')      # Teal: early-stage rescued (discovered via GPGLMM)
-            else:
-                colors.append('#7f7f7f')      # Slate Grey: baseline spatial/contact noise
-
-        min_whisker, max_whisker = 0.0, 0.0
-
+        # plot the variance error whiskers first so shapes sit neatly on top
         for i, (_, row) in enumerate(df_sub.iterrows()):
             b = float(row["GPGLMM_3D_Beta"])
             se = float(row["GPGLMM_3D_SE"])
@@ -373,9 +368,42 @@ def generate_proportional_quadrant_plot(master_file=None, output_dir=None):
 
             if ci_low < min_whisker: min_whisker = ci_low
             if ci_high > max_whisker: max_whisker = ci_high
-            ax.plot([ci_low, ci_high], [i, i], color='#7f7f7f', linewidth=0.9, zorder=1)
+            ax.plot([ci_low, ci_high], [i, i], color='#666666', linewidth=0.9, zorder=1)
 
-        ax.scatter(df_sub["GPGLMM_3D_Beta"], y_pos, c=colors, s=14, edgecolor='black', linewidth=0.4, zorder=2)
+        # loop through features individually and evaluate explicit model checkpoint flags
+        for i, (_, row) in enumerate(df_sub.iterrows()):
+            is_sig_3d = str(row.get("GPGLMM_3D_IsSig", "NO")).strip().upper() == "YES"
+            passed_coevol = str(row.get("Verkerk_Final_CoEvol", "NO")).strip().upper() == "YES"
+            passed_stage1 = str(row.get("Verkerk_BRMS_Spatial_Stage1", "NO")).strip().upper() == "YES"
+            framework_class = str(row.get("Framework_Resolution_Class", "")).strip()
+
+            # 1. COHORT 1: Stable Core Framework Consensus (Passed Stage 2, brms, and GPGLMM)
+            if "Stable Core Framework Consensus" in framework_class or (is_sig_3d and passed_coevol and passed_stage1):
+                color_node = '#0072B2'   # okabe-ito deep blue
+                marker_node = 'o'        # circle
+                size_node = 16
+
+            # 2. COHORT 2: Late-Stage Rescued (Passed brms & GPGLMM, but failed Stage 2 Co-Evolution)
+            elif "Confirmed by brms and GP-GLMM" in framework_class or (is_sig_3d and passed_stage1):
+                color_node = '#56B4E9'   # okabe-ito sky blue
+                marker_node = '^'        # triangle up
+                size_node = 18
+
+            # 3. COHORT 3: Rescued Universals (Signal Recovered by GP-GLMM Alone)
+            elif "Signal Recovered by GP-GLMM Only" in framework_class or is_sig_3d:
+                color_node = '#009E73'   # okabe-ito bluish green
+                marker_node = 'D'        # diamond
+                size_node = 14
+
+            # 4. FALLBACK: Consensus Non-Significant Baseline Elements
+            else:
+                color_node = '#888888'   # neutral grey
+                marker_node = 's'        # square
+                size_node = 14
+
+            ax.scatter(row["GPGLMM_3D_Beta"], y_pos[i], c=color_node, marker=marker_node,
+                       s=size_node, edgecolor='black', linewidth=0.4, zorder=2)
+
         ax.set_yticks(y_pos)
         ax.set_yticklabels(df_sub["PU_Short"], fontsize=6)
 
@@ -395,12 +423,10 @@ def generate_proportional_quadrant_plot(master_file=None, output_dir=None):
 
     fig.text(0.5, 0.96, "Distribution of Validated Spatio-Phylogenetic Universals", fontsize=12, fontweight='bold', ha='center', va='top')
 
-    # legend details
     legend_elements = [
-        Line2D([], [], marker='o', color='w', markerfacecolor='#1f4e79', markeredgecolor='black', markersize=6, label='Cross-framework Consensus'),
-        Line2D([], [], marker='o', color='w', markerfacecolor='#0070c0', markeredgecolor='black', markersize=6, label='Late-Stage Rescued (Passed Stage 1 Only)'),
-        Line2D([], [], marker='o', color='w', markerfacecolor='#00b0f0', markeredgecolor='black', markersize=6, label='Early-Stage Rescued (GPGLMM Discovery)'),
-        # Line2D([], [], marker='X', color='w', markerfacecolor='#d62728', markeredgecolor='black', markersize=6, label='Isolate-Driven False Positives')
+        Line2D([], [], marker='o', color='w', markerfacecolor='#0072B2', markeredgecolor='black', markersize=7, label='Stable Core Consensus (Passed Stage 2)'),
+        Line2D([], [], marker='^', color='w', markerfacecolor='#56B4E9', markeredgecolor='black', markersize=7, label='Late-Stage Rescued (brms + GP-GLMM)'),
+        Line2D([], [], marker='D', color='w', markerfacecolor='#009E73', markeredgecolor='black', markersize=6, label='Rescued Universals (GP-GLMM Only)')
     ]
 
     fig.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, 0.946), ncol=2, frameon=False, fontsize=8)
@@ -421,6 +447,7 @@ def generate_proportional_quadrant_plot(master_file=None, output_dir=None):
     print(f"Proportional forest plots successfully generated -> '{pdf_out}' & '{png_out}'\n")
 
 def generate_global_summary_scatter_plot(master_summary_path=None):
+    """plots the final comparative scatter matrix with custom marker profiles to guarantee grayscale safety."""
     if master_summary_path is None:
         master_summary_path = master_summary_default
 
@@ -457,7 +484,7 @@ def generate_global_summary_scatter_plot(master_summary_path=None):
         uncertainty_reduction = vk_se - gp_se
 
         group_assignment = "Consensus Non-Significant"
-        color_code = "#bcbd22"
+        color_code = "#888888"
         marker_type = "s"
         delta_z_score = np.random.uniform(-0.5, 0.5)
 
@@ -470,30 +497,31 @@ def generate_global_summary_scatter_plot(master_summary_path=None):
 
             framework_class = str(row.get("Framework_Resolution_Class", "")).strip()
 
+            # unique shape markers paired to unique colors to support black and white photocopy scanning
             if "Stable Core Framework Consensus" in framework_class:
                 group_assignment = "Stable Core Consensus"
-                color_code = "#2ca02c"
-                marker_type = "o"
+                color_code = "#0072B2" # deep blue
+                marker_type = "o" # circle
                 delta_z_score = np.random.uniform(0.1, 1.8)
             elif "Confirmed by brms and GP-GLMM" in framework_class:
                 group_assignment = "Cross-framework Consensus (brms + GPGLMM)"
-                color_code = "#1f77b4"
-                marker_type = "^"
+                color_code = "#56B4E9" # sky blue
+                marker_type = "^" # triangle up
                 delta_z_score = np.random.uniform(2.1, 3.8)
             elif "Signal Recovered by GP-GLMM Only" in framework_class:
                 group_assignment = "Rescued Universals (GPGLMM Alone)"
-                color_code = "#00b0f0"
-                marker_type = "^"
+                color_code = "#009E73" # green
+                marker_type = "D" # diamond
                 delta_z_score = np.random.uniform(4.0, 5.8)
             elif "Legacy False Positive" in framework_class:
                 group_assignment = "Isolate-Driven False Positives"
-                color_code = "#d62728"
-                marker_type = "X"
+                color_code = "#D55E00" # vermilion orange
+                marker_type = "X" # filled x
                 delta_z_score = np.random.uniform(2.1, 3.5)
             else:
                 group_assignment = "Consensus Non-Significant"
-                color_code = "#bcbd22"
-                marker_type = "s"
+                color_code = "#888888" # gray
+                marker_type = "s" # square
                 delta_z_score = np.random.uniform(-0.5, 0.5)
 
         global_plot_records.append({
@@ -513,7 +541,7 @@ def generate_global_summary_scatter_plot(master_summary_path=None):
         first_row = group_data.iloc[0]
         ax.scatter(group_data["Uncertainty_Reduction"], group_data["Delta_Z_Score"],
                    c=first_row["Color"], marker=first_row["Marker"], s=85, alpha=0.85,
-                   edgecolors="none", label=group_name)
+                   edgecolors="black", linewidths=0.5, label=group_name)
 
     ax.axvline(x=0, color="gray", linestyle="-", alpha=0.3, linewidth=1.0)
 
@@ -529,7 +557,7 @@ def generate_global_summary_scatter_plot(master_summary_path=None):
         4.8, 4.5,
         "Quadrant II:\nRescued universals\n(Isolate Variance Stabilised)",
         fontsize=10,
-        color="darkblue",
+        color="#0072B2",
         weight="bold",
         bbox=dict(facecolor="white", alpha=0.85, boxstyle="round,pad=0.4", edgecolor="none")
     )
