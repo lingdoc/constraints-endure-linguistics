@@ -28,7 +28,7 @@ total_valid_structural_features = 0
 running_weighted_spatial_sum = 0.0
 running_weighted_structural_sum = 0.0
 
-# 1. load coordinate master tracking data
+# load coordinate master tracking data
 if not os.path.exists(glottolog_path):
     print(f"Error: Master map file missing at {glottolog_path}")
     exit(1)

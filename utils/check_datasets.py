@@ -5,18 +5,18 @@ of raw linguistic data tables and compressed phylogenetic trees.
 import os
 import gzip
 
-# 📍 DYNAMIC PATH ROUTING: anchors folders relative to this script's location
+# anchor folders relative to this script's location
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def check_linguistic_datasets():
-    # dynamically routes to the data folder from anywhere in the workspace
+    # route to the data folder from anywhere in the workspace
     results_dir = os.path.join(base_dir, "tlu")
 
     if not os.path.isdir(results_dir):
         print(f"Error: Cannot find directory '{results_dir}'.")
         return
 
-    # Isolate valid feature subdirectories, skipping summary assets
+    # isolate valid feature subdirectories, skipping summaries
     subfolders = sorted([
         f for f in os.listdir(results_dir)
         if os.path.isdir(os.path.join(results_dir, f)) and f != "BT_results_summary"
@@ -38,7 +38,7 @@ def check_linguistic_datasets():
         trees_count = 0
         issue_found = False
 
-        # Ingest and check formatting boundaries in the raw feature data text
+        # ingest and check formatting boundaries in the raw feature data text
         if os.path.exists(bt_path):
             try:
                 with open(bt_path, "r", encoding="utf-8") as f:
@@ -47,10 +47,10 @@ def check_linguistic_datasets():
                 if lines:
                     languages_count = len(lines)
 
-                    # Read matrix column distribution to calculate feature metrics
+                    # read matrix column distribution to calculate feature metrics
                     sample_cols = lines[0].split()
                     if len(sample_cols) > 1:
-                        # Index 0 holds the language identifier; remaining columns denote linguistic features
+                        # index 0 holds the language identifier; remaining columns denote linguistic features
                         features_count = len(sample_cols) - 1
             except Exception as e:
                 print(f"Warning: Error reading {bt_path}: {e}")
@@ -58,7 +58,7 @@ def check_linguistic_datasets():
         else:
             issue_found = True
 
-        # Count tree iterations inside the compressed Nexus file archive
+        # count tree iterations inside the compressed nexus file
         if os.path.exists(tree_path):
             try:
                 with gzip.open(tree_path, "rt", encoding="utf-8") as f:

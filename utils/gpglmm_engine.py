@@ -146,7 +146,7 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
             stats_profile["Reason"] = "Tree file processing error"
             return univ, stats_profile
         # map 2D Lat/Long into a 3D Earth-Centered coordinate field space (X, Y, Z)
-        # R targets Earth's mean radius in kilometers (6371.0)
+        # R provides Earth's mean radius in kilometers (6371.0)
         # scaling inputs to radians matches standard trigonometric vector mappings
         R = 6371.0
         lat_rad = np.radians(df['latitude'].to_numpy().astype(float))
@@ -189,17 +189,17 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
             # Random Intercept columns: Family, Macroarea, Branch
             loop_matrix_state = np.column_stack((family_factor, macro_factor, branch_factor)).astype(float)
 
-            # explicitly pass the slope variable and link it to Macroarea (column 2)
+            # explicitly pass the slope variable and link it to macroarea (column 2)
             rand_slope_variable = X                          # 1D array of independent variable
-            group_mapping_index = [2]                        # 1-indexed link pointing to column 2 (macroarea)
+            group_mapping_index = [2]                        # indexed link pointing to column 2 (macroarea)
 
             try:
-                # Initialize model using correct gpboost keyword parameters
+                # initialize model
                 gp_model = gpb.GPModel(
-                    group_data=loop_matrix_state,            # Multi-level random intercepts matrix
-                    group_rand_coef_data=rand_slope_variable, # Random slope vector (Replaces rand_slopes_config dict)
-                    ind_effect_group_rand_coef=group_mapping_index, # Binds the slope to group level column 2
-                    gp_coords=coords,                        # Geocentric continuous spatial GP coords
+                    group_data=loop_matrix_state,            # multi-level random intercepts matrix
+                    group_rand_coef_data=rand_slope_variable, # random slope vector
+                    ind_effect_group_rand_coef=group_mapping_index, # bind the slope to group level column 2
+                    gp_coords=coords,                        # geocentric continuous spatial GP coords
                     cov_function="exponential",
                     likelihood="bernoulli_logit",
                     num_parallel_threads=8
@@ -207,8 +207,8 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
 
                 gp_model.set_optim_params(params={
                     "optimizer_cov": "lbfgs",
-                    "maxit": 45,                             # Raised to handle the slope parameter variance search
-                    # Parameter Ordering footprint:
+                    "maxit": 45,                             # handle the slope parameter variance search
+                    # parameter ordering:
                     # [var_family, var_macroarea_int, var_macroarea_slope, var_branch, var_spatial, range_spatial]
                     "init_cov_pars": [0.2, 0.2, 0.2, 0.2, 0.5, 500.0],
                     "convergence_criterion": "relative_change_in_parameters",
@@ -238,11 +238,11 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
                         "Standard_Error": s_val
                     })
 
-                    # Prediction layer updated to mirror initialization configurations
+                    # prediction
                     preds = gp_model.predict(
                         X_pred=X_with_intercept,
                         group_data_pred=loop_matrix_state,
-                        group_rand_coef_data_pred=rand_slope_variable, # Mirror random slopes into prediction layer
+                        group_rand_coef_data_pred=rand_slope_variable,
                         gp_coords_pred=coords,
                         predict_response=False,
                         predict_var=False
@@ -269,7 +269,7 @@ def process_single_feature_gpglmm(featfile, gldf_shared, ntrees=100, output_dir=
             traj_out_path = os.path.join(output_dir, f"gpglmm_100tree_trajectory_{univ.lower()}.csv")
             df_traj.to_csv(traj_out_path, index=False)
 
-        # compute final statistical averages across the full MCMC tree matrix distribution
+        # compute final statistical averages
         final_param = float(np.median(params))
         final_se = float(np.median(ses))
 

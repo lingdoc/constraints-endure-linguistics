@@ -225,7 +225,7 @@ def generate_global_empirical_contrast(feature_id="0582KA", master_summary_path=
     print(f"Macro-contrast view exported successfully for feature {feature_id.upper()} -> '{output_img_path}'")
 
 def batch_plot_all_global_views(master_summary_path=None):
-    """triggers full cross-class grid visualizers sequentially across arrays."""
+    """Plots all cross-class visuals sequentially."""
     if master_summary_path is None:
         master_summary_path = master_summary_default
 
@@ -239,7 +239,7 @@ def batch_plot_all_global_views(master_summary_path=None):
         generate_global_empirical_contrast(feature_id=extracted_id, master_summary_path=master_summary_path)
 
 def generate_supplementary_tables(master_file=None, output_dir=None):
-    """parses primary spreadsheet indexes to export separate data tables."""
+    """Parses primary spreadsheet indexes to export separate data tables."""
     print("Extracting supplemental sub-tables from master data matrix...")
 
     if master_file is None:
@@ -356,7 +356,7 @@ def generate_proportional_quadrant_plot(master_file=None, output_dir=None):
         df_sub.sort_values(by="abs_beta", ascending=True, inplace=True)
         y_pos = np.arange(len(df_sub))
 
-        # ✅ FIXED: Initialize baseline tracking boundaries before the loop evaluates them
+        # initialize baseline tracking boundaries before the loop evaluates them
         min_whisker = 0.0
         max_whisker = 0.0
 

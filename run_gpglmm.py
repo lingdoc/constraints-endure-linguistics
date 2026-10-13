@@ -32,10 +32,10 @@ def archive_old_run(target_dir="output/model_predictions", completed_features=No
         if old_files:
             backup_dir = "output/model_predictions_backup"
 
-            # Identify files to clear out vs files to keep based on resume state
+            # identify files to clear out vs files to keep based on resume state
             files_to_archive = []
             for f in old_files:
-                # Extracts feature name from: gpglmm_latent_distribution_[feature].csv
+                # extracts feature name from: gpglmm_latent_distribution_[feature].csv
                 # or gpglmm_100tree_trajectory_[feature].csv
                 feat_token = f.replace("gpglmm_latent_distribution_", "").replace("gpglmm_100tree_trajectory_", "").replace(".csv", "").upper()
                 if feat_token not in completed_features:
