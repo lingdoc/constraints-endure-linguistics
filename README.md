@@ -1,10 +1,10 @@
 # Constraints that Endure: Assessing Model Robustness in Linguistic Typology
 
-This repository contains the replication scripts and code used to analyze model robustness and isolate parameter volatility within global typological databases, using the cross-linguistic universals framework from Verkerk et al. (2026).
+This repository contains the replication scripts and code used to analyze model robustness and isolate parameter volatility, using the cross-linguistic universals framework from Verkerk et al. (2026).
 
 ## The Core Problem: Isolate Variance Traps
 
-The original study utilized a Bayesian spatiophylogenetic mixed model (`brms` in R) across 100 posterior phylogenetic trees to evaluate support for 191 binary grammatical universals. However, where structural density drops below a critical floor (𝜅_structural ≤ 0.10), it indicates that there are a large number of disconnected families or unlinked nodes.
+The original study utilized a Bayesian spatiophylogenetic mixed model (`brms` in R) across 100 posterior phylogenetic trees to evaluate support for 191 binary grammatical universals. However, in this dataset structural density drops below a critical floor (𝜅_structural ≤ 0.10), indicating that there are a large number of disconnected families or unlinked nodes.
 
 When a multi-level sampling algorithm encounters such historical isolates (single language families with no close tree relatives), estimating the parameter space can result in the following issues:
 * **Parameter Collapse:** Unanchored localized signals are over-smoothed and flatline toward global intercept means.
@@ -50,13 +50,13 @@ This replication pipeline introduces an alternative **Topology-Aware Generalized
 
 ## Replication Summary Metrics
 
-The reanalysis confirms **all 60 core universals** that passed the final evolutionary co-evolution checks in the original study (via `BayesTraits`). By insulating singleton variance profiles, the current framework maps all 191 universals into four resolution classes:
+The reanalysis confirms **59 core universals** that passed the final evolutionary co-evolution checks in the original study (via `BayesTraits`). By insulating singleton variance profiles, the current framework maps all 191 universals into four resolution classes:
 
-*   **Cross-framework consensus (83 universals):** Highly robust features confirmed as significant by both `brms` and `GPGLMM`. This group encompasses all 60 final co-evolution universals, and is split into 2 subcategories:
-      1. 60 stable baseline patterns (*Stable Core Consensus*).
-      2. 23 rules that clear regional slope tests (*Cross-framework Consensus (brms + GP-GLMM)*).
+*   **Cross-framework consensus (83 universals):** Highly robust features confirmed as significant by both `brms` and `GPGLMM`. This group encompasses 59 final co-evolution universals, and is split into 2 subcategories:
+      1. 59 stable baseline patterns (*Stable Core Consensus*).
+      2. 24 rules that clear regional slope tests (*Cross-framework Consensus (brms + GP-GLMM)*).
 *   **Rescued Universals (16 universals):** Cross-linguistic patterns that were obscured or dropped by the original `brms` final filters due to parameter instability, recovered via explicit isolate tracking (*Rescued Universals (GP-GLMM Alone)*).
-*   **Isolate-Driven False Positives (6 universals):** Typological claims supported by the original `brms` model that collapse into non-significance once background singleton noise is insulated, indicating that their original significance was an artifact of unlinked sample noise (*Legacy False Positive*).
+*   **Isolate-Driven False Positives (6 universals):** Typological claims supported by the original `brms` model that collapse into non-significance once background singleton noise is insulated, indicating that their original significance was an artifact of unlinked sample noise (*Legacy False Positive*). This includes one universal (0517ka) that passed the `BayesTraits` coevolution check in the original study.
 *   **Consensus Non-Significant (86 universals):** Universals where both the Bayesian and Frequentist pipelines agree there is no meaningful evolutionary signal.
 
 ![Meta-Analysis Comparison Map](./output/global_synthesis_scatter.png)
