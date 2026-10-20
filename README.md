@@ -84,7 +84,7 @@ The forest plot displays estimated model effects (β coefficients) and 95% confi
 ## Execution & replication
 
 ### Pinned dependencies
-Install the required packages using the requirements file. This automatically downloads the helper package `pykdensity` to manage data density checks:
+Install the required packages using the requirements file. This automatically downloads the helper package `pytstability` to manage data density checks:
 ```bash
 pip install -r requirements.txt
 ```
