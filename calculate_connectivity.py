@@ -23,8 +23,10 @@ compiled_results = []
 
 total_valid_spatial_features = 0
 total_valid_structural_features = 0
+total_valid_tsi_features = 0
 running_weighted_spatial_sum = 0.0
 running_weighted_structural_sum = 0.0
+running_weighted_tsi_sum = 0.0
 
 if not os.path.exists(glottolog_path):
     print(f"Error: Master map file missing at {glottolog_path}")
@@ -62,7 +64,7 @@ for feat_path in feat_data_paths:
     print(f"    Family tree file: {tree_path}")
 
     try:
-        spatial_metrics, struct_metrics, tsi_current = calculate_densities(
+        t_metrics = calculate_densities(
             data=ling_df,
             id_col='glottocode',
             tree=tree_path,
@@ -75,14 +77,17 @@ for feat_path in feat_data_paths:
             verbose=False
         )
 
-        k_spatial = float(spatial_metrics["kappa"]) if not pd.isna(spatial_metrics["kappa"]) else np.nan
-        k_structural = float(struct_metrics["kappa"]) if not pd.isna(struct_metrics["kappa"]) else np.nan
+        k_spatial = float(t_metrics["spatial_metrics"].get("kappa", np.nan))
+        k_structural = float(t_metrics["structural_metrics"].get("kappa", np.nan))
+        tsi_current = float(t_metrics.get("topology_stability_index", np.nan))
+        gamma_current = float(t_metrics.get("critical_horizon", np.nan))
 
     except Exception as e:
         print(f"    Warning: Density calculation failed for {feat_id}: {e}")
         k_spatial = np.nan
         k_structural = np.nan
         tsi_current = np.nan
+        gamma_current = np.nan
 
     if not pd.isna(tsi_current) and tsi_current <= 0.0018:
         tier_status = "critical funnel zone"
@@ -97,6 +102,7 @@ for feat_path in feat_data_paths:
         "Spatial_Density": k_spatial if not pd.isna(k_spatial) else np.nan,
         "Structural_Density": k_structural if not pd.isna(k_structural) else np.nan,
         "Topology_Stability_Index": tsi_current if not pd.isna(tsi_current) else np.nan,
+        "Critical_Horizon": gamma_current if not pd.isna(gamma_current) else np.nan,
         "Operational_Status": tier_status
     })
 
