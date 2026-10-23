@@ -438,13 +438,11 @@ def generate_proportional_quadrant_plot(master_file=None, output_dir=None):
         clean_title = cat.title() if cat != 'other' else 'Other Morphosyntactic'
         fig.text(bbox.x0, bbox.y1 + 0.012, f"Category: {clean_title} (n={count})", fontsize=9, fontweight='bold', ha='left', va='bottom')
 
-    pdf_out = os.path.join(output_dir, "universals_forest_plot.pdf")
     png_out = os.path.join(output_dir, "universals_forest_plot.png")
 
-    plt.savefig(pdf_out, dpi=300, bbox_inches='tight', pad_inches=0.02)
     plt.savefig(png_out, dpi=300, bbox_inches='tight', pad_inches=0.02)
     plt.close()
-    print(f"Proportional forest plots successfully generated -> '{pdf_out}' & '{png_out}'\n")
+    print(f"Proportional forest plot successfully generated -> '{png_out}'\n")
 
 def generate_global_summary_scatter_plot(master_summary_path=None):
     """plots the final comparative scatter matrix with custom marker profiles to guarantee grayscale safety."""
