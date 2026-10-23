@@ -10,7 +10,7 @@ When a multi-level sampling algorithm encounters such historical isolates (singl
 * **Parameter Collapse:** Unanchored localized signals are over-smoothed and flatline toward global intercept means.
 * **Parameter Explosion:** Runaway variance estimation triggers extreme uncertainty inflation on boundary nodes, pinning error caps against safety ceilings.
 
-This replication pipeline introduces an alternative **Topology-Aware Generalized Linear Mixed Model with Gaussian Process (GP-GLMM)** using `gpboost` in Python. While both models share a matching `bernoulli_logit` link, continuous geographic kernels (2D vs 3D), and regional random slopes (for macroareas), the current architecture implements a data isolation layer that routes historical isolates to independent variance tracks. This insulates the network fields, resolving calculation crashes and rescuing stable typological signals that were previously masked by estimation noise.
+This replication pipeline introduces an alternative **Topology-Aware Generalized Linear Mixed Model with Gaussian Process (GP-GLMM)** using `gpboost` in Python. Importantly, the library is used only for its ability to integrate Gaussian Process matrices with linear mixed effects - the tree-boosting capabilities of the package is not used. This allows for better comparison between the two models. While both models share a matching `bernoulli_logit` link, continuous geographic kernels (2D vs 3D), and regional random slopes (for macroareas), the current architecture implements a data isolation layer that routes historical isolates to independent variance tracks. This insulates the network fields, resolving calculation crashes and rescuing stable typological signals that were previously masked by estimation noise.
 
 ## Project Structure
 
@@ -50,7 +50,7 @@ This replication pipeline introduces an alternative **Topology-Aware Generalized
 
 ## Replication Summary Metrics
 
-The reanalysis confirms **59 core universals** that passed the final evolutionary co-evolution checks in the original study (via `BayesTraits`). By insulating singleton variance profiles, the current framework maps all 191 universals into four resolution classes:
+The reanalysis confirms **59 core universals** that passed the final evolutionary co-evolution checks in the original study (via `BayesTraits`). By insulating singleton variance profiles, the current framework maps all 191 universals into five resolution classes:
 
 *   **Cross-framework consensus (83 universals):** Highly robust features confirmed as significant by both `brms` and `GPGLMM`. This group encompasses 59 final co-evolution universals, and is split into 2 subcategories:
       1. 59 stable baseline patterns (*Stable Core Consensus*).
